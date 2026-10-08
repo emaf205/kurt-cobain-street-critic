@@ -1,273 +1,208 @@
 /* ==========================================================================
-   STREET CRITIC: Skater Polemico - Database Dialoghi & Reazioni
-   Battute irriverenti, colte, sferzanti e ciniche da giovane polemico italiano
+   VIA SAVONA CRITIC: Kurt in Milan - English Dialogues & Archetypes
+   Setting: Via Savona / Zona Tortona (Milan Fashion & Design District)
+   Protagonist: Kurt Cobain (Disillusioned, rude, anti-corporate grunge icon)
    ========================================================================== */
 
 export const PEDESTRIAN_TYPES = {
-  UMARELL: 'umarell',
-  MANAGER: 'manager',
-  VIGILE: 'vigile',
-  INFLUENCER: 'influencer',
-  BOOMER_MONOPATTINO: 'boomer_monopattino',
-  SCIURA: 'sciura',
-  RUNNER: 'runner',
-  MARANZA: 'maranza',
-  TURISTA: 'turista'
+  FASHION_VICTIM: 'fashion_victim',
+  DESIGN_ARCHITECT: 'design_architect',
+  APERITIVO_BRO: 'aperitivo_bro',
+  CASTING_MODEL: 'casting_model',
+  PR_BOUNCER: 'pr_bouncer',
+  MILANESE_SCIURA: 'milanese_sciura',
+  SPECIALTY_BARISTA: 'specialty_barista',
+  ELECTRIC_COURIER: 'electric_courier'
 };
 
 export const PEDESTRIAN_CONFIG = {
-  [PEDESTRIAN_TYPES.UMARELL]: {
-    name: 'Pensionato al Cantiere',
-    title: 'L\'Umarell Certificato',
-    colorOutfit: 0xd2b48c, // Giubbotto beige/cammello
-    colorPants: 0x3d3d3d,
-    accessory: 'hands_back',
+  [PEDESTRIAN_TYPES.FASHION_VICTIM]: {
+    name: 'Fashion Week Influencer',
+    title: 'Archive Runway Purist',
+    colorOutfit: 0x111111, // All-black avant-garde designer outfit
+    colorPants: 0x1a1a1a,
+    accessory: 'sunglasses_phone',
     dialogues: [
       {
-        skater: "Uè capo! Se fissi ancora quel buco nell'asfalto rischi che il Comune ti chieda la consulenza tecnica!",
-        pedestrian: "Alla tua età lavoravo già 14 ore al giorno, disgraziato!"
+        kurt: "Nice vintage jacket. Did you buy authenticity off a showroom rack, or does your stylist handle all your existential dread?",
+        pedestrian: "Excuse me?! This is archival Margiela! You look like you slept under a bridge in Seattle!"
       },
       {
-        skater: "Tranquillo nonno, la malta fresca non scappa. Torna al bar a commentare il meteo!",
-        pedestrian: "Guarda che asfalto hanno buttato... ai miei tempi si faceva meglio!"
+        kurt: "You're recording an outfit check while standing next to overflowing dumpster bags. Poetic corporate decay.",
+        pedestrian: "Security! Someone get this unwashed relic out of my camera frame!"
       },
       {
-        skater: "Mani dietro la schiena e sguardo da perito fallimentare: sei il monumento vivente dell'incuria urbana!",
-        pedestrian: "Vai a lavorare invece di rotolare su quella tavola da delinquente!"
+        kurt: "Oversized sunglasses indoors at 3 PM? What are you hiding from, your own lack of original personality?",
+        pedestrian: "I have 400K followers! You probably don't even have a LinkedIn profile!"
       },
       {
-        skater: "Spostati zio, che sto calcolando la traiettoria e non vorrei incrinarti l'anca artificiale!",
-        pedestrian: "Chiamo i vigili! Chiamo subito il 112!"
-      },
-      {
-        skater: "Bello lo scavo, eh? Secondo te la granulometria del pietrisco è a norma ISO 9001?",
-        pedestrian: "Ma guarda questo saputello con la felpa bucata..."
+        kurt: "Four thousand euros for distressing on denim that looks like it got mauled by a lawnmower. Late capitalism is hilarious.",
+        pedestrian: "It's called deconstructivism, you utter peasant!"
       }
     ]
   },
 
-  [PEDESTRIAN_TYPES.MANAGER]: {
-    name: 'Consulente / Yuppie',
-    title: 'Senior Associate in Crisi',
-    colorOutfit: 0x1c2833, // Completo scuro formale
-    colorPants: 0x1c2833,
-    accessory: 'briefcase',
+  [PEDESTRIAN_TYPES.DESIGN_ARCHITECT]: {
+    name: 'Fuorisalone Architect',
+    title: 'Spatial Concept Visionary',
+    colorOutfit: 0x222222, // Black turtleneck
+    colorPants: 0x424949,
+    accessory: 'round_glasses_folder',
     dialogues: [
       {
-        skater: "Bello il completo in poliestere bro! Quante slide PowerPoint servono per giustificare il tuo stipendio?",
-        pedestrian: "Non ho tempo per i ragazzini, ho una call con New York!"
+        kurt: "'Spatial sustainability'? Bro, you're charging eight grand for a brutalist chair that gives people permanent spine damage.",
+        pedestrian: "It's a theoretical manifesto on ergonomic discomfort! You wouldn't understand post-industrial dialectics!"
       },
       {
-        skater: "Corri pure al briefing delle nove, tanto il plusvalore te lo ciuccia tutto il partner dello studio!",
-        pedestrian: "La mia parcella oraria vale più del tuo intero albero genealogico!"
+        kurt: "You converted an old factory where workers lost their fingers into a showroom for Scandinavian scented candles. Bravo.",
+        pedestrian: "This is urban regeneration! We are revitalizing the creative ecosystem of Milan!"
       },
       {
-        skater: "Fatturi o stai solo scappando dal vuoto cosmico delle tue relazioni interpersonali?",
-        pedestrian: "Levati dal marciapiede, parassita improduttivo!"
+        kurt: "Round horn-rimmed glasses and a black turtleneck. You're an Ikea catalog with a nicotine habit.",
+        pedestrian: "At least I build tangible structures instead of whining into an amplifier!"
       },
       {
-        skater: "Occhio che ti cola il matcha latte biologico da sei euro sulla cravatta di seta!",
-        pedestrian: "Questo me lo ripaga tuo padre quando ti denuncio!"
-      },
-      {
-        skater: "Ottanta ore settimanali di lavoro per comprarti l'Apple Watch che ti dice di respirare: poesia pura!",
-        pedestrian: "Sei un tipico caso di fallimento del sistema scolastico!"
+        kurt: "Every sentence out of your mouth has 'synergy', 'curation' and 'narrative'. Say one real word, I dare you.",
+        pedestrian: "Get off my installation pavement! This concrete is imported from Berlin!"
       }
     ]
   },
 
-  [PEDESTRIAN_TYPES.VIGILE]: {
-    name: 'Agente di Polizia Locale',
-    title: 'Il Paladino della Sosta',
-    colorOutfit: 0x1a242f, // Divisa scura
-    colorVest: 0xf4d03f,   // Pettorina catarifrangente giallo fluo
-    accessory: 'cap_badge',
+  [PEDESTRIAN_TYPES.APERITIVO_BRO]: {
+    name: 'Finance / Aperitivo Bro',
+    title: 'Senior Venture Associate',
+    colorOutfit: 0x1c2833, // Blue blazer
+    colorPants: 0xd5dbdb, // Beige chinos
+    accessory: 'cocktail_glass',
     dialogues: [
       {
-        skater: "Maresciallo! Il codice della strada del '92 è incompatibile con il mio diritto alla traiettoria fluida!",
-        pedestrian: "Ferma immediatamente quel mezzo non omologato o ti sequestro la tavola!"
+        kurt: "Standing on the sidewalk sipping a twelve-euro spritz while shouting into AirPods about Q4 KPIs. Bleak existence, man.",
+        pedestrian: "Bro, my bonus this quarter buys your whole thrift shop wardrobe ten times over!"
       },
       {
-        skater: "Multami per eccesso di gravità, agente! Qui di illegale ci sono solo le voragini del marciapiede!",
-        pedestrian: "Articolo 190 del Codice della Strada! Favorisca le generalità!"
+        kurt: "You work ninety hours a week so your firm's partner can buy a yacht. But hey, free olives at happy hour, right?",
+        pedestrian: "Walk away, loser! Some of us actually contribute to the GDP of this city!"
       },
       {
-        skater: "Stia sereno con quel fischietto, che la tachicardia dopo i cinquanta è pericolosa!",
-        pedestrian: "Ti becco alla prossima curva, mascalzone!"
+        kurt: "Slicked-back hair and a monogrammed shirt. You look like a walking lawsuit for insider trading.",
+        pedestrian: "Don't spill dirty street water on my Loro Piana loafers, you freak!"
       },
       {
-        skater: "La mia tavola ha emissioni zero e zero rispetto per i sensi unici inventati dal Comune!",
-        pedestrian: "Voi giovani senza senso civico siete la rovina della città!"
-      },
-      {
-        skater: "Tranquillo che non ho la targa, la mia identità è un costrutto postmoderno inafferrabile!",
-        pedestrian: "Centrale, ho un soggetto non cooperativo in felpa nera sul corso!"
+        kurt: "You're laughing at spreadsheet memes on your Apple Watch. Have some self-respect.",
+        pedestrian: "I'm networking! Something you clearly never learned to do in your mother's basement!"
       }
     ]
   },
 
-  [PEDESTRIAN_TYPES.INFLUENCER]: {
-    name: 'Content Creator',
-    title: 'L\'Influencer di Quartiere',
-    colorOutfit: 0xf5b7b1, // Tuta trendy pastello
-    colorPants: 0xeb984e,
-    accessory: 'selfie_stick',
-    dialogues: [
-      {
-        skater: "Bro, quel ring light portatile non colmerà mai la voragine di affetto genitoriale che ti porti dietro!",
-        pedestrian: "Ragazzi, guardate nei DM: sono appena stato aggredito da un boomer mentale!"
-      },
-      {
-        skater: "Togliti da mezzo con quel bastone da selfie prima che te lo trasformi in un asse per il grind!",
-        pedestrian: "Non rovinarmi la golden hour che devo fare la sponsorizzata della crema idratante!"
-      },
-      {
-        skater: "Storytime: 'Oggi uno skater mi ha fatto notare che il mio engagement rate è ai minimi storici'!",
-        pedestrian: "Ti cancello dai social! Ti blocco l'IP!"
-      },
-      {
-        skater: "Bella la posa plastica sul cassonetto, fa molto 'estetica del degrado consapevole'!",
-        pedestrian: "È storytelling visivo, ignorante, si chiama moodboard urbana!"
-      },
-      {
-        skater: "Codice sconto 'SENZA-FUTURO20' per il prossimo corso su come arricchirsi vendendo fuffa online?",
-        pedestrian: "La mia agenzia di management ti farà causa per danni d'immagine!"
-      }
-    ]
-  },
-
-  [PEDESTRIAN_TYPES.BOOMER_MONOPATTINO]: {
-    name: 'Pendolare in Monopattino',
-    title: 'Il Centauro a Batteria',
-    colorOutfit: 0x2e86c1, // Giacca a vento blu
-    colorHelmet: 0xf1c40f, // Caschetto fluo
-    accessory: 'scooter',
-    dialogues: [
-      {
-        skater: "Guidi quel trabiccolo a noleggio col terrore negli occhi di chi ha scoperto le leggi della fisica dopo i cinquanta!",
-        pedestrian: "Spostati che io pago 29 centesimi al minuto per questo mezzo ecologico!"
-      },
-      {
-        skater: "Caschetto giallo fluo e borsa di cuoio: sembri un evidenziatore Stabilo travolto dalla crisi di mezza età!",
-        pedestrian: "La micromobilità è il futuro della transizione ecologica, cafone!"
-      },
-      {
-        skater: "Tieniti a due mani quel manubrio che alla prima buca lasci l'otturazione del molare sull'asfalto!",
-        pedestrian: "Frena! Frena che non so dov'è il pulsante del freno rigenerativo!"
-      },
-      {
-        skater: "Il monopattino elettrico a ruotine piene: l'emblema supremo della capitolazione motoria della nostra specie!",
-        pedestrian: "Tu usi ancora le gambe per spingerti, primitivo dell'era analogica!"
-      }
-    ]
-  },
-
-  [PEDESTRIAN_TYPES.SCIURA]: {
-    name: 'Sciura Borghese',
-    title: 'L\'Aristocratica del Marciapiede',
-    colorOutfit: 0x935116, // Pelliccia/cappotto cammello elegante
-    colorPants: 0x1b2631,
-    accessory: 'lapdog',
-    dialogues: [
-      {
-        skater: "Signora, quel barboncino è geneticamente un lupo selvatico: smetta di mettergli il cappottino zebrato!",
-        pedestrian: "Fufi non ascoltare questa canaglia, abbraccia la mamma!"
-      },
-      {
-        skater: "Se raccogliesse i souvenir del quadrupede con la stessa solerzia con cui mi fulmina con lo sguardo, saremmo a Zurigo!",
-        pedestrian: "Che insolente! Ai miei tempi i giovani viaggiavano con la testa bassa e rispettavano le dame!"
-      },
-      {
-        skater: "Tranquilla signora, non le rubo la borsa di Prada: sono anarco-marxista, mica un ladro di galline!",
-        pedestrian: "Aiuto! Un comunista a rotelle! Qualcuno chiami una guardia giurata!"
-      },
-      {
-        skater: "Bel lifting, signora! Se sorride ancora un po' le sopracciglia le decollano verso la stratosfera!",
-        pedestrian: "Questa è pura invidia sociale di classe subalterna!"
-      }
-    ]
-  },
-
-  [PEDESTRIAN_TYPES.RUNNER]: {
-    name: 'Fanatico del Fitness',
-    title: 'Il Marciatore della Dopamina',
-    colorOutfit: 0x27ae60, // Canotta fluo verde
+  [PEDESTRIAN_TYPES.CASTING_MODEL]: {
+    name: 'Runway Casting Model',
+    title: 'Fashion Week Hopeful',
+    colorOutfit: 0x2c3e50,
     colorPants: 0x17202a,
-    accessory: 'armband',
+    accessory: 'portfolio_book',
     dialogues: [
       {
-        skater: "Corri pure a quattro al chilometro bro, ma dal mutuo a tasso variabile non scappi neanche con le scarpe in carbonio!",
-        pedestrian: "Non interrompere la mia zona cardio aerobica, brucio acido lattico!"
+        kurt: "Running on cobblestones in four-inch heels with a portfolio book. The fashion industry is a meat grinder and you're the burger.",
+        pedestrian: "I have five minutes to get to Spazio Savona, move your filthy board!"
       },
       {
-        skater: "Tutti quei chilometri di sofferenza per produrre due grammi di endorfine e zero pensieri critici!",
-        pedestrian: "Se corressi anche tu non avresti questa rabbia repressa verso il progresso!"
+        kurt: "They're gonna pay you in leftover sample bags and exposure while the creative director buys another villa in Como.",
+        pedestrian: "Stop talking to me! Bad vibes ruin my skin texture!"
       },
       {
-        skater: "Guarda che il cardiofrequenzimetro sul polso ti sta implorando un trancio di pizza e un bicchiere di vino!",
-        pedestrian: "Oggi 21 chilometri a digiuno intermittente! Tu cosa hai fatto oggi?!"
-      },
-      {
-        skater: "Attento alle ginocchia, fra! A trent'anni il menisco presenta il conto senza passare dal via!",
-        pedestrian: "Sei solo un pigro che delega la cinetica a quattro cuscinetti a sfera!"
+        kurt: "Don't faint on the crosswalk, girl. A diet of black coffee and vape fumes isn't a sustainable breakfast.",
+        pedestrian: "You smell like wet flannel and teenage resentment! Back off!"
       }
     ]
   },
 
-  [PEDESTRIAN_TYPES.MARANZA]: {
-    name: 'Trapper di Periferia',
-    title: 'Il Boss del Muretto',
-    colorOutfit: 0x111111, // Tuta lucida nera
-    colorPants: 0x111111,
-    accessory: 'pouch_crossbody',
+  [PEDESTRIAN_TYPES.PR_BOUNCER]: {
+    name: 'Showroom Door Hostess',
+    title: 'Guestlist Gatekeeper',
+    colorOutfit: 0x0a0a0a, // Sleek black jumpsuit
+    colorPants: 0x0a0a0a,
+    accessory: 'headset_clipboard',
     dialogues: [
       {
-        skater: "Bro, spegni quella cassa bluetooth! Quel pezzo trap in autotune fa sanguinare le orecchie anche ai piccioni!",
-        pedestrian: "Oh fra ma che vuoi?! Guarda che ti faccio saltare la tavola dai piedi!"
+        kurt: "Holding an iPad by a velvet rope acting like St. Peter at the gates of Heaven. It's a party for hand sanitizer, relax.",
+        pedestrian: "You're definitely not on the VIP guestlist, sir. Step beyond the barriers immediately!"
       },
       {
-        skater: "Bello il borsello da due litri a tracolla: ci tieni le giustificazioni per le assenze o i fazzoletti per piangere?",
-        pedestrian: "Stai muto che chiamo i miei fra di Rozzano e vedi come voli!"
+        kurt: "You rejected people all night just to let in three minor DJs and a guy who sells crypto. High standards.",
+        pedestrian: "This is a private preview for Press and Tier-1 Talents! Call the police!"
       },
       {
-        skater: "Sguardo da duro a sedici anni, poi alle nove e mezza ti chiama tua madre che il minestrone è sul fuoco!",
-        pedestrian: "Rispetta la strada fra, non sai chi sono io nel quartiere!"
-      },
-      {
-        skater: "Tuta sintetizzata e ciabatte coi calzini d'inverno: la massima espressione del dadaismo contemporaneo!",
-        pedestrian: "Questo è drip puro fra, tu vesti ancora con le felpe dell'oratorio!"
+        kurt: "Standing in the Milan drizzle checking barcodes for minimum wage. Corporate servitude with a radio headset.",
+        pedestrian: "I am authorized to have you removed from Via Savona! Keep walking!"
       }
     ]
   },
 
-  [PEDESTRIAN_TYPES.TURISTA]: {
-    name: 'Turista Spaesato',
-    title: 'Il Pellegrino della Guida',
-    colorOutfit: 0xe67e22, // Camicia hawaiana / zaino
-    colorPants: 0xd5dbdb,
-    accessory: 'big_backpack',
+  [PEDESTRIAN_TYPES.MILANESE_SCIURA]: {
+    name: 'Zona Tortona Aristocrat',
+    title: 'The Neighborhood Matriarch',
+    colorOutfit: 0x784212, // Camel hair coat
+    colorPants: 0x1b2631,
+    accessory: 'pearls_poodle',
     dialogues: [
       {
-        skater: "Welcome to reality my friend: il Colosseo è a trecento chilometri e quella in mano è la mappa della metropolitana di Tokyo!",
-        pedestrian: "Excuse me! Where is the authentic real homemade carbonara with cream?!"
+        kurt: "Ma'am, that toy poodle is genetically a descendant of gray wolves. Stop giving it an organic cashmere cardigan.",
+        pedestrian: "Che orrore! A scruffy vagrant in Via Savona! Where are the Carabinieri?!"
       },
       {
-        skater: "Quattro euro per un espresso al banco non sono 'autentico folklore locale', sono un furto aggravato con scasso!",
-        pedestrian: "Very beautiful historic town! But people are very aggressive on wheels!"
+        kurt: "Don't clutch your Hermès bag so tight, lady. I write songs, I don't mug grandmothers.",
+        pedestrian: "Disgusting insolence! The youth in this district have completely lost all decorum!"
       },
       {
-        skater: "Bello lo zaino da novanta litri per fare due passi sul corso piano: stai scalando l'Everest o ti sei trasferito?",
-        pedestrian: "Is this the line for the Vatican Museum or the ice cream shop?!"
+        kurt: "Nice facelift. If you smile any harder, your ears are gonna touch behind your head.",
+        pedestrian: "You hooligan! I have lived in this palazzo since 1974, get your board off my sidewalk!"
+      }
+    ]
+  },
+
+  [PEDESTRIAN_TYPES.SPECIALTY_BARISTA]: {
+    name: 'Specialty Coffee Snob',
+    title: 'Artisan Pour-Over Alchemist',
+    colorOutfit: 0x5d4037, // Brown canvas work apron
+    colorPants: 0x263238,
+    accessory: 'apron_beanie',
+    dialogues: [
+      {
+        kurt: "Charging seven euros for fermented Ethiopian bean juice dripped through an origami filter. Just give people caffeine, man.",
+        pedestrian: "It's an anaerobic naturally processed light roast with notes of bergamot and jasmine, you barbarian!"
+      },
+      {
+        kurt: "Knitted wool beanie in thirty-degree summer heat. Your brain is literally boiling for aesthetic points.",
+        pedestrian: "It's a lifestyle statement! You probably drink instant commodity Robusta from a vending machine!"
+      },
+      {
+        kurt: "Tattooed hands, raw denim apron, twelve minutes to pour a cup. You're an actor playing a coffee shop worker.",
+        pedestrian: "Extraction pressure is a science! Take your negative energy back to Seattle!"
+      }
+    ]
+  },
+
+  [PEDESTRIAN_TYPES.ELECTRIC_COURIER]: {
+    name: 'Food App Rider',
+    title: 'The Algorithmic Speeder',
+    colorOutfit: 0xe67e22, // High-vis courier jacket
+    colorPants: 0x17202a,
+    accessory: 'delivery_box',
+    dialogues: [
+      {
+        kurt: "Risking your collarbone on wet tram tracks so some marketing director can get cold poke bowls. Revolt against the app, dude.",
+        pedestrian: "Hey! I have three minutes before my delivery rating drops! Get out of my lane!"
+      },
+      {
+        kurt: "The algorithm controls your pedals and your bladder breaks. You're living in a cyberpunk dystopia with neon logos.",
+        pedestrian: "I don't have time for philosophy, man! Move your skateboard!"
       }
     ]
   }
 };
 
-/**
- * Ottiene una battuta casuale per il tipo di pedone specificato
- */
 export function getRandomDialogue(pedestrianType) {
-  const config = PEDESTRIAN_CONFIG[pedestrianType] || PEDESTRIAN_CONFIG[PEDESTRIAN_TYPES.UMARELL];
+  const config = PEDESTRIAN_CONFIG[pedestrianType] || PEDESTRIAN_CONFIG[PEDESTRIAN_TYPES.FASHION_VICTIM];
   const list = config.dialogues;
   const index = Math.floor(Math.random() * list.length);
   return {

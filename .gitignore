@@ -6,3 +6,5 @@ __MACOSX
 *.pem
 *.key
 node_modules/
+dist-ftp/
+*.zip

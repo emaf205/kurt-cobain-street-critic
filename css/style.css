@@ -485,18 +485,20 @@ html, body {
 
 .touch-cluster {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
   pointer-events: auto;
+  max-width: 150px;
 }
 
 .btn-touch {
-  width: 64px;
-  height: 64px;
-  border-radius: 32px;
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
   background: var(--color-surface);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   display: flex;
   align-items: center;

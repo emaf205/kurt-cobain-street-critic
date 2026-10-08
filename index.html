@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>STREET CRITIC: Skater Polemico</title>
-  <meta name="description" content="Videogioco 3D realistico in cui uno skater irriverente attraversa la città commentando e dissando chiunque incontri.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛹</text></svg>">
+  <title>KURT IN MILAN: Via Savona Critic</title>
+  <meta name="description" content="3D realistic free-roam indie game where Kurt Cobain wanders Via Savona in Milan, dodging obstacles and ruthlessly roasting fashion victims and architects.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎸</text></svg>">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -13,131 +13,131 @@
   <!-- WebGL Three.js Canvas -->
   <canvas id="game-canvas"></canvas>
 
-  <!-- Overlay UI Principale -->
+  <!-- UI Overlay -->
   <div id="ui-container">
 
-    <!-- Schermata di Avvio & Comandi -->
+    <!-- Start / Tutorial Screen -->
     <div id="start-screen">
       <div class="start-card clickable">
-        <div class="brand-badge">Simulatore Urbano Irriverente</div>
-        <h1 class="game-title">STREET <span>CRITIC</span></h1>
+        <div class="brand-badge">MILAN DESIGN DISTRICT // VIA SAVONA</div>
+        <h1 class="game-title">KURT IN MILAN: <span>SAVONA CRITIC</span></h1>
         <p class="game-subtitle">
-          Sei uno skater sfacciato e polemico che viaggia dritto lungo il corso metropolitano.
-          Schiva gli ostacoli, aumenta la velocità e demolisci con la dialettica ogni cittadino conformista che incroci sul tuo cammino!
+          You are a scruffy, disillusioned Kurt Cobain stranded in Via Savona — Milan's most pretentious fashion and design district.
+          Roam the sidewalks, dodge showroom delivery boxes and dumped e-scooters, drop your board for high-speed skate bursts,
+          and confront corporate yuppies, architects, and influencers with brutal existential insults.
         </p>
 
         <div class="controls-grid">
           <div class="control-item">
-            <span class="key-badge">← →</span>
+            <span class="key-badge">W A S D</span>
             <div>
-              <div class="control-desc">Sterza</div>
-              <span class="control-sub">Schiva i bordi e scegli la corsia</span>
+              <div class="control-desc">Free 360° Movement</div>
+              <span class="control-sub">Walk & explore sidewalks of Via Savona</span>
             </div>
           </div>
           <div class="control-item">
-            <span class="key-badge">↑ / W</span>
+            <span class="key-badge">SPACE</span>
             <div>
-              <div class="control-desc">Spinta (Push)</div>
-              <span class="control-sub">Gamba a terra per accelerare</span>
+              <div class="control-desc">Jump / Ollie</div>
+              <span class="control-sub">Leap over boxes, scooters & barriers</span>
             </div>
           </div>
           <div class="control-item">
-            <span class="key-badge">↓ / S</span>
+            <span class="key-badge">SHIFT</span>
             <div>
-              <div class="control-desc">Powerslide</div>
-              <span class="control-sub">Frenata di traverso su asfalto</span>
+              <div class="control-desc">Skate Burst</div>
+              <span class="control-sub">Drop board & cruise (also triggers randomly)</span>
             </div>
           </div>
           <div class="control-item">
-            <span class="key-badge">SPAZIO</span>
+            <span class="key-badge">NEARBY</span>
             <div>
-              <div class="control-desc">Ollie (Salto)</div>
-              <span class="control-sub">Salta tombini, cordoli e birilli</span>
+              <div class="control-desc">Confront & Roast</div>
+              <span class="control-sub">Walk up to pedestrians to trigger insults</span>
             </div>
           </div>
         </div>
 
-        <button id="btn-start-game" class="btn-primary">ENTRA IN STRADA (GIOCA)</button>
+        <button id="btn-start-game" class="btn-primary">HIT VIA SAVONA (PLAY)</button>
       </div>
     </div>
 
-    <!-- HUD di Gioco -->
+    <!-- Gameplay HUD -->
     <div id="hud" class="hidden">
-      <!-- Barra Superiore Statistiche & Controlli -->
+      <!-- Top Stats Bar -->
       <div class="hud-top-bar">
         <div class="stats-card">
           <div class="stat-item">
-            <span class="stat-label">Velocità</span>
-            <span class="stat-value"><span id="speed-val">15</span> <small style="font-size:11px;font-weight:400;color:#999">km/h</small></span>
+            <span class="stat-label">Speed</span>
+            <span class="stat-value"><span id="speed-val">0</span> <small style="font-size:11px;font-weight:400;color:#999">km/h</small></span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Distanza</span>
+            <span class="stat-label">Via Savona</span>
             <span class="stat-value"><span id="distance-val">0</span> <small style="font-size:11px;font-weight:400;color:#999">m</small></span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Polemiche</span>
+            <span class="stat-label">Roasted</span>
             <span class="stat-value highlight" id="count-val">0</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Ego Score</span>
+            <span class="stat-label">Cynicism Score</span>
             <span class="stat-value highlight" id="score-val">0</span>
           </div>
         </div>
 
         <div class="hud-actions">
-          <button id="btn-toggle-camera" class="btn-hud">🎥 Terza Persona</button>
-          <button id="btn-toggle-sound" class="btn-hud">🔊 Effetti Audio</button>
-          <button id="btn-toggle-voice" class="btn-hud">🗣️ Voce Skater</button>
-          <button id="btn-restart" class="btn-hud">🔄 Riavvia</button>
+          <button id="btn-toggle-camera" class="btn-hud">🎥 3rd Person</button>
+          <button id="btn-toggle-sound" class="btn-hud">🔊 Grunge Audio</button>
+          <button id="btn-toggle-voice" class="btn-hud">🗣️ Kurt Voice</button>
+          <button id="btn-restart" class="btn-hud">🔄 Restart</button>
         </div>
       </div>
 
-      <!-- Bacheca Live dei Dissing Effettuati -->
+      <!-- Live Milanese Roast Log -->
       <div class="feed-panel">
         <div class="feed-header">
-          <span>BACHECA DELLE POLEMICHE</span>
+          <span>MILANESE ROAST LOG</span>
           <span>LIVE</span>
         </div>
         <ul id="dialogue-log-list" class="feed-list"></ul>
       </div>
 
-      <!-- Fumetto Dinamico dello Skater (Proiettato in 3D sullo schermo) -->
+      <!-- Kurt's Dynamic 3D Speech Bubble -->
       <div id="skater-bubble" class="speech-bubble">
-        <div class="bubble-tag">🛹 SKATER POLEMICO</div>
+        <div class="bubble-tag">🎸 KURT COBAIN // VIA SAVONA</div>
         <div id="skater-bubble-text" class="bubble-quote">"..."</div>
       </div>
 
-      <!-- Fumetto Dinamico del Pedone Incontrato -->
+      <!-- Pedestrian's Dynamic 3D Reaction Bubble -->
       <div id="pedestrian-bubble" class="speech-bubble">
-        <div class="bubble-tag" id="ped-bubble-name">CITTADINO</div>
+        <div class="bubble-tag" id="ped-bubble-name">MILANESE RESIDENT</div>
         <div id="ped-bubble-text" class="bubble-quote">"..."</div>
       </div>
 
-      <!-- Controlli Touch per Dispositivi Mobili -->
+      <!-- Mobile Touch Controls -->
       <div id="touch-controls">
         <div class="touch-cluster">
           <button id="btn-touch-left" class="btn-touch">◀</button>
           <button id="btn-touch-right" class="btn-touch">▶</button>
+          <button id="btn-touch-up" class="btn-touch">▲</button>
+          <button id="btn-touch-down" class="btn-touch">▼</button>
         </div>
         <div class="touch-cluster">
-          <button id="btn-touch-push" class="btn-touch">▲</button>
-          <button id="btn-touch-ollie" class="btn-touch">JUMP</button>
+          <button id="btn-touch-jump" class="btn-touch">JUMP</button>
+          <button id="btn-touch-skate" class="btn-touch">SKATE</button>
         </div>
       </div>
     </div>
 
-    <!-- Schermata di Pausa -->
+    <!-- Pause Overlay -->
     <div id="pause-overlay" class="hidden clickable">
-      <h2 class="pause-title">PAUSA</h2>
-      <p style="color:var(--color-text-muted); margin-bottom:20px;">Premi 'P' sulla tastiera per riprendere la corsa.</p>
+      <h2 class="pause-title">PAUSED</h2>
+      <p style="color:var(--color-text-muted); margin-bottom:20px;">Press 'P' on keyboard to resume your stroll through Via Savona.</p>
     </div>
 
   </div>
 
-  <!-- Dipendenze Three.js locale ad alta affidabilità -->
   <script src="vendor/three.min.js"></script>
-
-  <!-- Logica Modulare del Gioco -->
   <script type="module" src="js/game.js"></script>
 </body>
 </html>

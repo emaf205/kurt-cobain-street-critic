@@ -1,23 +1,24 @@
 /* ==========================================================================
-   STREET CRITIC: Skater Polemico - Audio Engine (Web Audio API & Web Speech)
-   Suoni procedurali realistici per skate su asfalto + Sintesi Vocale Italiana
+   VIA SAVONA CRITIC: Kurt Cobain Edition - Audio Engine
+   Realistic grunge audio: Overdrive guitar feedback, footsteps, skateboard drops,
+   obstacle collision sounds, and English Web Speech synthesis.
    ========================================================================== */
 
-class SoundEngine {
+class GrungeSoundEngine {
   constructor() {
     this.ctx = null;
     this.isMuted = false;
     this.voiceMuted = false;
     this.isInitialized = false;
 
-    // Nodi per il rumore continuo di rotolamento delle ruote
     this.rollNoiseNode = null;
     this.rollFilterNode = null;
     this.rollGainNode = null;
 
-    // Sintesi vocale
+    this.distortionCurve = this.makeDistortionCurve(45);
+
     this.synth = typeof window !== 'undefined' && 'speechSynthesis' in window ? window.speechSynthesis : null;
-    this.italianVoice = null;
+    this.englishVoice = null;
     this.initVoices();
   }
 
@@ -32,7 +33,7 @@ class SoundEngine {
         this.ctx.resume();
       }
     } catch (e) {
-      console.warn("Web Audio non supportato o bloccato dall'interazione utente:", e);
+      console.warn("Web Audio initialization note:", e);
     }
   }
 
@@ -40,8 +41,9 @@ class SoundEngine {
     if (!this.synth) return;
     const load = () => {
       const voices = this.synth.getVoices();
-      // Cerca voce italiana nativa
-      this.italianVoice = voices.find(v => v.lang.startsWith('it') || v.lang === 'it_IT') || null;
+      // Look for natural English voices (US or UK)
+      this.englishVoice = voices.find(v => (v.lang.startsWith('en_US') || v.lang.startsWith('en-US') || v.lang.startsWith('en')) && !v.name.includes('Google')) ||
+                          voices.find(v => v.lang.startsWith('en')) || null;
     };
     load();
     if (this.synth.onvoiceschanged !== undefined) {
@@ -49,7 +51,18 @@ class SoundEngine {
     }
   }
 
-  // Generatore di rumore rosa procedurale per il rotolamento delle ruote in uretano
+  makeDistortionCurve(amount) {
+    const k = typeof amount === 'number' ? amount : 45;
+    const n_samples = 44100;
+    const curve = new Float32Array(n_samples);
+    const deg = Math.PI / 180;
+    for (let i = 0; i < n_samples; ++i) {
+      const x = (i * 2) / n_samples - 1;
+      curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+    }
+    return curve;
+  }
+
   setupRollSound() {
     if (!this.ctx) return;
     const bufferSize = this.ctx.sampleRate * 2;
@@ -73,7 +86,6 @@ class SoundEngine {
     whiteNoise.buffer = noiseBuffer;
     whiteNoise.loop = true;
 
-    // Filtro passa-banda per simulare la grana dell'asfalto
     this.rollFilterNode = this.ctx.createBiquadFilter();
     this.rollFilterNode.type = 'bandpass';
     this.rollFilterNode.frequency.value = 650;
@@ -90,116 +102,72 @@ class SoundEngine {
     this.rollNoiseNode = whiteNoise;
   }
 
-  // Aggiorna l'intensità e frequenza del rotolamento in base alla velocità effettiva
-  updateRoll(speed, isGrounded) {
+  updateRoll(speed, isSkating) {
     if (!this.ctx || !this.rollGainNode || this.isMuted) return;
 
-    if (!isGrounded || speed <= 0.02) {
-      this.rollGainNode.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
+    if (!isSkating || speed <= 0.02) {
+      this.rollGainNode.gain.setTargetAtTime(0, this.ctx.currentTime, 0.06);
       return;
     }
 
-    const targetGain = Math.min(0.28, speed * 0.22);
-    const targetFreq = 400 + speed * 1200;
+    const targetGain = Math.min(0.24, speed * 0.28);
+    const targetFreq = 450 + speed * 1300;
 
     this.rollGainNode.gain.setTargetAtTime(targetGain, this.ctx.currentTime, 0.08);
     this.rollFilterNode.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.08);
   }
 
-  // Ollie Pop: impatto netto della tavola sul suolo
+  playFootstep(isAlternate = false) {
+    if (!this.ctx || this.isMuted) return;
+    const now = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const freq = isAlternate ? 82 : 72;
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, now);
+    osc.frequency.exponentialRampToValueAtTime(32, now + 0.07);
+
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.08);
+  }
+
+  playBoardDrop() {
+    if (!this.ctx || this.isMuted) return;
+    const now = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(450, now);
+    osc.frequency.exponentialRampToValueAtTime(55, now + 0.1);
+
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.11);
+  }
+
   playOlliePop() {
     if (!this.ctx || this.isMuted) return;
     const now = this.ctx.currentTime;
 
-    // 1. Pop transiente ad alta frequenza (legno che sbatte)
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(320, now);
-    osc.frequency.exponentialRampToValueAtTime(80, now + 0.09);
+    osc.frequency.setValueAtTime(360, now);
+    osc.frequency.exponentialRampToValueAtTime(90, now + 0.08);
 
-    gain.gain.setValueAtTime(0.35, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.1);
-
-    // 2. Click sordo
-    const snap = this.ctx.createOscillator();
-    const snapGain = this.ctx.createGain();
-    snap.type = 'sine';
-    snap.frequency.setValueAtTime(850, now);
-    snap.frequency.exponentialRampToValueAtTime(150, now + 0.04);
-    snapGain.gain.setValueAtTime(0.25, now);
-    snapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-
-    snap.connect(snapGain);
-    snapGain.connect(this.ctx.destination);
-    snap.start(now);
-    snap.stop(now + 0.05);
-  }
-
-  // Landing slap: atterraggio delle 4 ruote sull'asfalto
-  playLanding() {
-    if (!this.ctx || this.isMuted) return;
-    const now = this.ctx.currentTime;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(180, now);
-    osc.frequency.exponentialRampToValueAtTime(45, now + 0.12);
-
-    gain.gain.setValueAtTime(0.4, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.13);
-  }
-
-  // Powerslide / Frenata brusca: stridio dell'uretano delle ruote di traverso sull'asfalto
-  playPowerslide() {
-    if (!this.ctx || this.isMuted) return;
-    const now = this.ctx.currentTime;
-
-    const osc = this.ctx.createOscillator();
-    const filter = this.ctx.createBiquadFilter();
-    const gain = this.ctx.createGain();
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(320, now);
-    osc.frequency.linearRampToValueAtTime(260, now + 0.25);
-
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(1800, now);
-    filter.Q.value = 3.5;
-
-    gain.gain.setValueAtTime(0.18, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.26);
-  }
-
-  // Push / Spinta col piede
-  playFootstep() {
-    if (!this.ctx || this.isMuted) return;
-    const now = this.ctx.currentTime;
-
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(120, now);
-    osc.frequency.exponentialRampToValueAtTime(50, now + 0.08);
-
-    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.setValueAtTime(0.3, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
     osc.connect(gain);
@@ -208,54 +176,117 @@ class SoundEngine {
     osc.stop(now + 0.09);
   }
 
-  // Effetto "Dissing Riuscito" / Polemica colpita
-  playDissingScore() {
+  // Pedestrian gasp / surprised exclamation sound
+  playPedestrianGasp() {
     if (!this.ctx || this.isMuted) return;
     const now = this.ctx.currentTime;
 
-    const osc1 = this.ctx.createOscillator();
-    const osc2 = this.ctx.createOscillator();
+    const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
-    osc1.type = 'sine';
-    osc2.type = 'sine';
-    osc1.frequency.setValueAtTime(587.33, now); // D5
-    osc1.frequency.setValueAtTime(880, now + 0.08); // A5
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(390, now + 0.16);
 
-    osc2.frequency.setValueAtTime(440, now);
-    osc2.frequency.setValueAtTime(659.25, now + 0.08);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
 
-    gain.gain.setValueAtTime(0.12, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-
-    osc1.connect(gain);
-    osc2.connect(gain);
+    osc.connect(gain);
     gain.connect(this.ctx.destination);
-
-    osc1.start(now);
-    osc2.start(now);
-    osc1.stop(now + 0.36);
-    osc2.stop(now + 0.36);
+    osc.start(now);
+    osc.stop(now + 0.2);
   }
 
-  // Sintesi vocale italiana per far pronunciare la battuta allo skater
+  // Collision with obstacle: dull thud + scrape + wood rattle
+  playObstacleHit() {
+    if (!this.ctx || this.isMuted) return;
+    const now = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(140, now);
+    osc.frequency.exponentialRampToValueAtTime(35, now + 0.18);
+
+    gain.gain.setValueAtTime(0.38, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.2);
+  }
+
+  // Heavy Grunge Electric Guitar Stinger (Drop D Power Chords)
+  playGrungeStinger() {
+    if (!this.ctx || this.isMuted) return;
+    const now = this.ctx.currentTime;
+
+    const notes = [73.42, 110.0, 146.83]; // D2, A2, D3
+
+    notes.forEach((freq, idx) => {
+      const osc = this.ctx.createOscillator();
+      const waveShaper = this.ctx.createWaveShaper();
+      const filter = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.linearRampToValueAtTime(freq * 0.985, now + 0.45);
+
+      waveShaper.curve = this.distortionCurve;
+      waveShaper.oversample = '4x';
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(2600, now);
+      filter.Q.value = 2.2;
+
+      gain.gain.setValueAtTime(0.19 / (idx + 1), now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+
+      osc.connect(waveShaper);
+      waveShaper.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.72);
+    });
+
+    // Feedback squeal
+    const feedback = this.ctx.createOscillator();
+    const fbGain = this.ctx.createGain();
+    feedback.type = 'sine';
+    feedback.frequency.setValueAtTime(659.25, now);
+    feedback.frequency.linearRampToValueAtTime(685, now + 0.5);
+
+    fbGain.gain.setValueAtTime(0.07, now);
+    fbGain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+
+    feedback.connect(fbGain);
+    fbGain.connect(this.ctx.destination);
+    feedback.start(now);
+    feedback.stop(now + 0.56);
+  }
+
+  // English Web Speech API Voice: Tired, cynical Kurt Cobain delivery
   speak(text) {
     if (!this.synth || this.voiceMuted) return;
 
     try {
-      this.synth.cancel(); // Interrompi battuta precedente se in corso
+      this.synth.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'it-IT';
-      utterance.rate = 1.18;  // Parlata sciolta, veloce e giovanile
-      utterance.pitch = 1.08; // Timbro leggermente squillante da ragazzo
+      utterance.lang = 'en-US';
+      utterance.rate = 1.05;  // Deliberate, deadpan, cynical tempo
+      utterance.pitch = 0.86; // Lower, raspy, tired Kurt Cobain pitch
       utterance.volume = 0.95;
 
-      if (this.italianVoice) {
-        utterance.voice = this.italianVoice;
+      if (this.englishVoice) {
+        utterance.voice = this.englishVoice;
       }
       this.synth.speak(utterance);
     } catch (e) {
-      console.warn("Impossibile eseguire la sintesi vocale:", e);
+      console.warn("Speech synthesis error:", e);
     }
   }
 
@@ -276,4 +307,4 @@ class SoundEngine {
   }
 }
 
-export const sound = new SoundEngine();
+export const sound = new GrungeSoundEngine();

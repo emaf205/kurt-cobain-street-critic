@@ -1,7 +1,7 @@
 /* ==========================================================================
-   STREET CRITIC: Skater Polemico - UI & HUD Manager
-   Fumetti dinamici 3D->2D proiettati su schermo, tachimetro, bacheca dei dissing
-   e gestione degli eventi di interfaccia.
+   VIA SAVONA CRITIC: Kurt in Milan - English UI & HUD Manager
+   Anti-overlap 3D->2D speech bubbles, Cynicism Score, live Milan roast feed,
+   and obstacle alert notifications.
    ========================================================================== */
 
 export class UIManager {
@@ -19,71 +19,67 @@ export class UIManager {
     this.bubbleTimeout = null;
     this.activePedestrian = null;
 
-    // Statistiche partita
     this.score = 0;
-    this.polemicheCount = 0;
+    this.roastCount = 0;
     this.distance = 0;
   }
 
-  // Mostra il balloon del dialogo proiettato sullo schermo
   showDialogue(dialogue, pedestrianObj) {
     this.activePedestrian = pedestrianObj;
 
-    // 1. Aggiorna balloon skater
-    const skaterText = document.getElementById('skater-bubble-text');
-    skaterText.textContent = `"${dialogue.skater}"`;
+    // 1. Kurt's Dialogue Bubble
+    const kurtText = document.getElementById('skater-bubble-text');
+    kurtText.textContent = `"${dialogue.kurt}"`;
     this.skaterBubble.classList.add('visible');
 
-    // 2. Aggiorna balloon pedone
+    // 2. Milanese Pedestrian's Reaction Bubble
     const pedName = document.getElementById('ped-bubble-name');
     const pedText = document.getElementById('ped-bubble-text');
-    pedName.textContent = dialogue.name;
+    pedName.textContent = dialogue.name.toUpperCase();
     pedText.textContent = `"${dialogue.pedestrian}"`;
     this.pedestrianBubble.classList.add('visible');
 
-    // 3. Aumenta statistiche e combo
-    this.polemicheCount++;
+    // 3. Score & Counter Progression
+    this.roastCount++;
     this.score += 150;
-    this.countVal.textContent = this.polemicheCount;
+    this.countVal.textContent = this.roastCount;
     this.scoreVal.textContent = this.score;
 
-    // Piccolo effetto popup punteggio
-    this.showFloatingScore("+150 DISSING!");
-
-    // 4. Aggiungi alla bacheca live dei dissing
+    this.showFloatingScore("+150 CYNICISM!");
     this.addLogEntry(dialogue);
 
-    // 5. Timer di scomparsa dopo 5 secondi
     if (this.bubbleTimeout) clearTimeout(this.bubbleTimeout);
     this.bubbleTimeout = setTimeout(() => {
       this.skaterBubble.classList.remove('visible');
       this.pedestrianBubble.classList.remove('visible');
       this.activePedestrian = null;
-    }, 5200);
+    }, 5400);
   }
 
-  // Aggiunge una voce al log laterale
+  showObstacleHitAlert(obstacleName) {
+    this.showFloatingScore(`STUMBLED ON ${obstacleName.toUpperCase()}!`, '#e74c3c');
+  }
+
   addLogEntry(dialogue) {
     if (!this.logList) return;
     const li = document.createElement('li');
     li.className = 'log-item';
     li.innerHTML = `
       <span class="log-target">${dialogue.name}:</span>
-      <span class="log-quote">${dialogue.skater.substring(0, 55)}...</span>
+      <span class="log-quote">${dialogue.kurt.substring(0, 58)}...</span>
     `;
     this.logList.prepend(li);
 
-    // Mantieni massimo 6 voci nel log
     while (this.logList.children.length > 6) {
       this.logList.removeChild(this.logList.lastChild);
     }
   }
 
-  // Mostra un tag galleggiante per il punteggio
-  showFloatingScore(text) {
+  showFloatingScore(text, color = 'var(--color-yellow)') {
     const floatEl = document.createElement('div');
     floatEl.className = 'floating-score';
     floatEl.textContent = text;
+    floatEl.style.background = color;
     document.body.appendChild(floatEl);
 
     setTimeout(() => {
@@ -91,32 +87,28 @@ export class UIManager {
     }, 1200);
   }
 
-  // Aggiorna posizione dei fumetti proiettando le coordinate 3D della scena su 2D del viewport
-  updateBubblesPosition(camera, skaterPosition) {
+  updateBubblesPosition(camera, kurtPosition) {
     const widthHalf = window.innerWidth / 2;
     const heightHalf = window.innerHeight / 2;
-    const padding = 20;
 
-    let currentSkaterSx = 0;
-    let currentSkaterSy = 0;
+    let currentKurtSx = 0;
+    let currentKurtSy = 0;
 
-    // Proiezione fumetto Skater
+    // Kurt's Bubble Projection
     if (this.skaterBubble && this.skaterBubble.classList.contains('visible')) {
-      const skaterHeadPos = skaterPosition.clone();
-      skaterHeadPos.y += 2.0; // Sopra la testa dello skater
-      skaterHeadPos.project(camera);
+      const kurtHeadPos = kurtPosition.clone();
+      kurtHeadPos.y += 2.05;
+      kurtHeadPos.project(camera);
 
-      // Se è davanti alla telecamera
-      if (skaterHeadPos.z >= -1 && skaterHeadPos.z <= 1) {
-        let sx = (skaterHeadPos.x * widthHalf) + widthHalf;
-        let sy = -(skaterHeadPos.y * heightHalf) + heightHalf;
+      if (kurtHeadPos.z >= -1 && kurtHeadPos.z <= 1) {
+        let sx = (kurtHeadPos.x * widthHalf) + widthHalf;
+        let sy = -(kurtHeadPos.y * heightHalf) + heightHalf;
 
-        // Limita entro lo schermo
         sx = Math.max(190, Math.min(window.innerWidth - 190, sx));
         sy = Math.max(140, Math.min(window.innerHeight - 90, sy));
 
-        currentSkaterSx = sx;
-        currentSkaterSy = sy;
+        currentKurtSx = sx;
+        currentKurtSy = sy;
 
         this.skaterBubble.style.visibility = 'visible';
         this.skaterBubble.style.transform = `translate(${sx}px, ${sy}px) translate(-50%, -100%)`;
@@ -125,10 +117,10 @@ export class UIManager {
       }
     }
 
-    // Proiezione fumetto Pedone
+    // Pedestrian's Bubble Projection
     if (this.activePedestrian && this.pedestrianBubble && this.pedestrianBubble.classList.contains('visible')) {
       const pedHeadPos = this.activePedestrian.group.position.clone();
-      pedHeadPos.y += 2.1; // Sopra la testa del pedone
+      pedHeadPos.y += 2.15;
       pedHeadPos.project(camera);
 
       if (pedHeadPos.z >= -1 && pedHeadPos.z <= 1) {
@@ -138,12 +130,12 @@ export class UIManager {
         px = Math.max(160, Math.min(window.innerWidth - 160, px));
         py = Math.max(80, Math.min(window.innerHeight - 80, py));
 
-        // Prevenzione collisione visiva se i due fumetti sono vicini
-        if (currentSkaterSy > 0 && Math.abs(px - currentSkaterSx) < 220 && Math.abs(py - currentSkaterSy) < 90) {
-          if (py >= currentSkaterSy) {
-            py = currentSkaterSy + 85;
+        // Anti-overlap offset
+        if (currentKurtSy > 0 && Math.abs(px - currentKurtSx) < 220 && Math.abs(py - currentKurtSy) < 95) {
+          if (py >= currentKurtSy) {
+            py = currentKurtSy + 88;
           } else {
-            py = Math.max(80, currentSkaterSy - 95);
+            py = Math.max(80, currentKurtSy - 98);
           }
         }
 
@@ -155,24 +147,21 @@ export class UIManager {
     }
   }
 
-  // Aggiorna tachimetro e distanza percorsa
   updateHUD(speed, currentZ) {
-    // Calcola velocità realistica in km/h (da 12 a 38 km/h)
-    const kmh = Math.round(speed * 85);
+    const kmh = Math.round(speed * 3.6);
     this.speedVal.textContent = kmh;
 
-    // Distanza percorsa in metri (valore assoluto di Z)
     this.distance = Math.max(0, Math.round(Math.abs(currentZ)));
     this.distanceVal.textContent = this.distance;
   }
 
   reset() {
     this.score = 0;
-    this.polemicheCount = 0;
+    this.roastCount = 0;
     this.distance = 0;
     this.countVal.textContent = '0';
     this.scoreVal.textContent = '0';
-    this.speedVal.textContent = '15';
+    this.speedVal.textContent = '0';
     this.distanceVal.textContent = '0';
     if (this.logList) this.logList.innerHTML = '';
     if (this.skaterBubble) this.skaterBubble.classList.remove('visible');

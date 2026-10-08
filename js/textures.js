@@ -1,51 +1,51 @@
 /* ==========================================================================
-   STREET CRITIC: Skater Polemico - Procedural Realistic Textures
-   Generatore su Canvas di texture urbane fotorealistiche ad alta definizione
+   VIA SAVONA CRITIC: Kurt in Milan - Procedural Textures
+   Textures of Milan's Via Savona / Zona Tortona: Post-industrial brick lofts,
+   fashion showrooms, cobblestone/asphalt, Milan street signs, and obstacle props.
    ========================================================================== */
 
 export class TextureGenerator {
-  // Texture Asfalto Realistico con grana bituminosa, righe stradali e imperfezioni
+  // Realistic Milanese Asphalt with road wear, cobblestone borders and cracks
   static createAsphaltTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 1024;
     canvas.height = 1024;
     const ctx = canvas.getContext('2d');
 
-    // 1. Base asfalto grigio antracite scuro
-    ctx.fillStyle = '#222326';
+    // Dark charcoal asphalt
+    ctx.fillStyle = '#1e2024';
     ctx.fillRect(0, 0, 1024, 1024);
 
-    // 2. Grana bitume e aggregato minerale (pietrisco)
+    // Bitumen grain & mineral grit
     const imgData = ctx.getImageData(0, 0, 1024, 1024);
     const data = imgData.data;
     for (let i = 0; i < data.length; i += 4) {
-      const noise = (Math.random() - 0.5) * 35;
-      data[i] = Math.min(255, Math.max(20, data[i] + noise));
-      data[i + 1] = Math.min(255, Math.max(20, data[i + 1] + noise));
-      data[i + 2] = Math.min(255, Math.max(22, data[i + 2] + noise + 2)); // tono asfalto freddo
+      const noise = (Math.random() - 0.5) * 32;
+      data[i] = Math.min(255, Math.max(16, data[i] + noise));
+      data[i + 1] = Math.min(255, Math.max(16, data[i + 1] + noise));
+      data[i + 2] = Math.min(255, Math.max(18, data[i + 2] + noise + 2));
     }
     ctx.putImageData(imgData, 0, 0);
 
-    // 3. Piccole crepe realistiche
-    ctx.strokeStyle = '#141415';
+    // Weathering cracks
+    ctx.strokeStyle = '#111214';
     ctx.lineWidth = 1.5;
-    for (let c = 0; c < 15; c++) {
+    for (let c = 0; c < 12; c++) {
       ctx.beginPath();
       let x = Math.random() * 1024;
       let y = Math.random() * 1024;
       ctx.moveTo(x, y);
       for (let s = 0; s < 5; s++) {
-        x += (Math.random() - 0.5) * 60;
-        y += (Math.random() - 0.5) * 60;
+        x += (Math.random() - 0.5) * 50;
+        y += (Math.random() - 0.5) * 50;
         ctx.lineTo(x, y);
       }
       ctx.stroke();
     }
 
-    // 4. Linee stradali centrali tratteggiate bianche (leggermente usurate dall'usura)
-    ctx.fillStyle = '#dedcd4';
-    ctx.globalAlpha = 0.88;
-    // Tratteggio corsia centrale
+    // Faded white lane dashed markings
+    ctx.fillStyle = '#d2d0c8';
+    ctx.globalAlpha = 0.85;
     for (let y = 60; y < 1024; y += 220) {
       ctx.fillRect(504, y, 16, 120);
     }
@@ -57,38 +57,33 @@ export class TextureGenerator {
     return texture;
   }
 
-  // Texture Marciapiede in porfido/lastricato di pietra con cordolo
+  // Milanese Sidewalk: Dark porphyry/granite slabs with curb stones
   static createSidewalkTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
 
-    // Base pietra chiara
-    ctx.fillStyle = '#9c9a96';
+    ctx.fillStyle = '#6e7072';
     ctx.fillRect(0, 0, 512, 512);
 
-    // Lastre di pietra con fughe
     const tileSize = 64;
     for (let x = 0; x < 512; x += tileSize) {
       for (let y = 0; y < 512; y += tileSize) {
-        // Variazione tonalità tra lastre
-        const shade = Math.floor(Math.random() * 20 - 10);
-        ctx.fillStyle = `rgb(${156 + shade}, ${154 + shade}, ${150 + shade})`;
+        const shade = Math.floor(Math.random() * 24 - 12);
+        ctx.fillStyle = `rgb(${110 + shade}, ${112 + shade}, ${114 + shade})`;
         ctx.fillRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
 
-        // Fughe scure
-        ctx.strokeStyle = '#5a5854';
+        ctx.strokeStyle = '#484a4c';
         ctx.lineWidth = 2;
         ctx.strokeRect(x, y, tileSize, tileSize);
       }
     }
 
-    // Micro-rumore poroso della pietra
     const imgData = ctx.getImageData(0, 0, 512, 512);
     const data = imgData.data;
     for (let i = 0; i < data.length; i += 4) {
-      const n = (Math.random() - 0.5) * 20;
+      const n = (Math.random() - 0.5) * 22;
       data[i] = Math.min(255, Math.max(0, data[i] + n));
       data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + n));
       data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + n));
@@ -101,203 +96,153 @@ export class TextureGenerator {
     return texture;
   }
 
-  // Texture Facciate Palazzi Realistici (Finestre, cornicioni, vetrine a piano terra)
+  // Via Savona Industrial Lofts & Fashion Showrooms
   static createBuildingTexture(style = 0) {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 1024;
     const ctx = canvas.getContext('2d');
 
-    const wallColors = ['#a36d4f', '#7e7b75', '#ba936f', '#4a535e', '#8c735d'];
+    // Milanese factory loft brick & plaster hues
+    const wallColors = ['#5c3a21', '#40454a', '#8a4b2d', '#2b2f33', '#7a604c'];
     const baseColor = wallColors[style % wallColors.length];
 
-    // Muro
     ctx.fillStyle = baseColor;
     ctx.fillRect(0, 0, 512, 1024);
 
-    // Trama mattoni / intonaco
-    ctx.fillStyle = 'rgba(0,0,0,0.06)';
-    for (let y = 0; y < 1024; y += 12) {
+    // Brick mortar lines
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    for (let y = 0; y < 1024; y += 14) {
       ctx.fillRect(0, y, 512, 1);
     }
 
-    // Finestre regolari
-    const winWidth = 44;
-    const winHeight = 72;
+    // Industrial multi-pane loft windows with black iron frames
+    const winWidth = 54;
+    const winHeight = 84;
     const cols = 5;
-    const rows = 9;
-    const startY = 160;
+    const rows = 8;
+    const startY = 150;
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        const x = 36 + c * 92;
-        const y = startY + r * 94;
+        const x = 32 + c * 92;
+        const y = startY + r * 102;
 
-        // Cornice finestra
-        ctx.fillStyle = '#222';
-        ctx.fillRect(x - 4, y - 4, winWidth + 8, winHeight + 8);
+        ctx.fillStyle = '#181a1b';
+        ctx.fillRect(x - 3, y - 3, winWidth + 6, winHeight + 6);
 
-        // Vetro: riflesso realistico azzurrato / luce interna calda casuale
-        const isLit = Math.random() > 0.45;
-        if (isLit) {
-          ctx.fillStyle = '#ffd685'; // Luce calda interna
-        } else {
-          ctx.fillStyle = '#1c2833'; // Vetro scuro con riflesso cielo
-        }
+        // Glass reflection / internal warm lighting
+        ctx.fillStyle = (c + r + style) % 3 === 0 ? '#ffeaae' : '#232b32';
         ctx.fillRect(x, y, winWidth, winHeight);
 
-        // Montanti infissi
-        ctx.fillStyle = '#3a3a3a';
+        // Iron window panes grid
+        ctx.fillStyle = '#111213';
         ctx.fillRect(x + winWidth / 2 - 1, y, 2, winHeight);
-        ctx.fillRect(x, y + winHeight / 2 - 1, winWidth, 2);
+        ctx.fillRect(x, y + winHeight / 3, winWidth, 2);
+        ctx.fillRect(x, y + (winHeight * 2) / 3, winWidth, 2);
 
-        // Davanzale in pietra
-        ctx.fillStyle = '#e0ded8';
-        ctx.fillRect(x - 6, y + winHeight + 2, winWidth + 12, 6);
+        // Stone lintel above window
+        ctx.fillStyle = '#9e9e9e';
+        ctx.fillRect(x - 4, y - 6, winWidth + 8, 4);
       }
     }
 
-    // Piano terra: Vetrina negozio / bottega o portone
-    ctx.fillStyle = '#1e2124';
-    ctx.fillRect(20, 1024 - 150, 472, 150);
+    // Ground Floor: Minimalist High-End Fashion Showroom / Design Gallery
+    ctx.fillStyle = '#121416';
+    ctx.fillRect(15, 1024 - 170, 482, 170);
 
-    // Insegna vetrina
-    ctx.fillStyle = '#c0392b';
-    ctx.fillRect(35, 1024 - 140, 442, 32);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 16px sans-serif';
+    // Showroom Signboard
+    ctx.fillStyle = '#f5f5f5';
+    ctx.fillRect(30, 1024 - 160, 452, 34);
+
+    ctx.fillStyle = '#0a0a0a';
+    ctx.font = '900 16px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.textAlign = 'center';
-    const storeNames = ['BAR DELLA STAZIONE', 'BOUTIQUE VINTAGE', 'CAFFÈ LETTERARIO', 'LIBRERIA DEL CORSO', 'OTTICA MODERNA'];
-    ctx.fillText(storeNames[style % storeNames.length], 256, 1024 - 118);
 
-    // Vetrate del negozio
-    ctx.fillStyle = '#1a3c40';
-    ctx.fillRect(45, 1024 - 100, 422, 90);
+    const showrooms = [
+      'SPAZIO SAVONA 37 // MILANO',
+      'TORTONA ARCHIVE GALLERY',
+      'SUPERSTUDIO EXPO // DESIGN',
+      'ATELIER VIA SAVONA // SHOWROOM',
+      'CONCEPT SPACE MILANO 2026'
+    ];
+    ctx.fillText(showrooms[style % showrooms.length], 256, 1024 - 138);
+
+    // Large showroom glass display
+    ctx.fillStyle = '#1b2d38';
+    ctx.fillRect(35, 1024 - 115, 442, 105);
+
+    // Milanese blue street name plaque on building corner
+    ctx.fillStyle = '#1a3a6b';
+    ctx.fillRect(25, 45, 190, 45);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(27, 47, 186, 41);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText("VIA SAVONA", 38, 68);
+    ctx.font = '9px sans-serif';
+    ctx.fillText("ZONA TORTONA / MILANO", 38, 82);
 
     const texture = new THREE.CanvasTexture(canvas);
     return texture;
   }
 
-  // Grip Tape dello Skateboard (ruvido, nero con intagli)
-  static createGripTapeTexture() {
+  // Kurt's beat-up grunge skateboard deck (scratched grip tape)
+  static createKurtGripTapeTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
 
-    ctx.fillStyle = '#111111';
+    ctx.fillStyle = '#181818';
     ctx.fillRect(0, 0, 256, 512);
 
     const imgData = ctx.getImageData(0, 0, 256, 512);
     const data = imgData.data;
     for (let i = 0; i < data.length; i += 4) {
-      const g = Math.random() * 40;
+      const g = Math.random() * 35;
       data[i] = g;
       data[i + 1] = g;
       data[i + 2] = g;
     }
     ctx.putImageData(imgData, 0, 0);
 
-    // Striscia sottile di intaglio nel grip tape (stile pro skater)
-    ctx.fillStyle = '#d4ac0d'; // Giallo skate street
-    ctx.fillRect(40, 250, 176, 4);
-
-    return new THREE.CanvasTexture(canvas);
-  }
-
-  // Grafica sotto la tavola (Deck art audace e irriverente)
-  static createDeckGraphicTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 512;
-    const ctx = canvas.getContext('2d');
-
-    // Gradiente legno acero canadese e graffiti
-    const grad = ctx.createLinearGradient(0, 0, 256, 512);
-    grad.addColorStop(0, '#e74c3c');
-    grad.addColorStop(0.5, '#2c3e50');
-    grad.addColorStop(1, '#f39c12');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 256, 512);
-
+    // Rough handwritten stencil "KURT" or "SUB POP"
     ctx.fillStyle = '#ffffff';
-    ctx.font = '900 28px sans-serif';
-    ctx.textAlign = 'center';
+    ctx.font = 'bold 20px monospace';
     ctx.save();
     ctx.translate(128, 256);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText("STREET CRITIC", 0, 0);
-    ctx.font = '16px sans-serif';
-    ctx.fillText("NO RESPECT // 2026", 0, 24);
+    ctx.fillText("SUB POP", -40, 6);
     ctx.restore();
 
     return new THREE.CanvasTexture(canvas);
   }
 
-  // Segnaletica transenna cantiere stradale (Strisce diagonali bianche e rosse catarifrangenti)
-  static createHazardStripesTexture() {
+  // Cardboard delivery box obstacle texture ("FRAGILE // DESIGN EXHIBITION")
+  static createBoxTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 256;
     const ctx = canvas.getContext('2d');
 
-    ctx.fillStyle = '#e74c3c'; // Rosso
+    ctx.fillStyle = '#bfa175'; // Brown cardboard
     ctx.fillRect(0, 0, 256, 256);
 
-    ctx.fillStyle = '#fdfefe'; // Bianco
-    ctx.lineWidth = 36;
-    ctx.strokeStyle = '#fdfefe';
+    // Packing tape
+    ctx.fillStyle = '#a6824e';
+    ctx.fillRect(0, 110, 256, 36);
 
-    for (let d = -256; d < 512; d += 64) {
-      ctx.beginPath();
-      ctx.moveTo(d, 0);
-      ctx.lineTo(d + 256, 256);
-      ctx.stroke();
-    }
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    return texture;
-  }
-
-  // Tombino in ghisa stradale realistico
-  static createManholeTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
-    const ctx = canvas.getContext('2d');
-
-    // Ghisa scura
-    ctx.fillStyle = '#1c1f22';
-    ctx.beginPath();
-    ctx.arc(128, 128, 124, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Rilievo cerchi concentrici
-    ctx.strokeStyle = '#2f353b';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(128, 128, 110, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(128, 128, 75, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Scanalature a griglia
-    ctx.lineWidth = 2;
-    for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
-      ctx.beginPath();
-      ctx.moveTo(128 + Math.cos(a) * 30, 128 + Math.sin(a) * 30);
-      ctx.lineTo(128 + Math.cos(a) * 105, 128 + Math.sin(a) * 105);
-      ctx.stroke();
-    }
-
-    ctx.fillStyle = '#7f8c8d';
-    ctx.font = 'bold 12px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText("ACQUEDOTTO", 128, 132);
+    // Fragile stencil
+    ctx.fillStyle = '#8b0000';
+    ctx.font = 'bold 18px monospace';
+    ctx.fillText("FRAGILE", 20, 50);
+    ctx.fillStyle = '#111111';
+    ctx.font = '12px sans-serif';
+    ctx.fillText("MILANO DESIGN", 20, 80);
+    ctx.fillText("VIA SAVONA EXPO", 20, 98);
 
     return new THREE.CanvasTexture(canvas);
   }

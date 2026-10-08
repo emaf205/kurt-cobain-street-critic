@@ -1,7 +1,8 @@
 /* ==========================================================================
-   STREET CRITIC: Skater Polemico - Procedural Infinite Realistic City
-   Generazione continua di strada, marciapiedi con cordolo, palazzi realistici,
-   lampioni, cantieri comunali, alberi, arredo urbano e illuminazione solare.
+   VIA SAVONA CRITIC: Milan Urban Environment & Interactive Obstacles
+   Via Savona architecture (brick showrooms, design lofts, Milan street signs)
+   and street obstacles to dodge or jump over (delivery boxes, parked e-scooters,
+   cocktail bistro tables, and roadworks barriers).
    ========================================================================== */
 
 import { TextureGenerator } from './textures.js';
@@ -10,79 +11,37 @@ export class City {
   constructor(scene) {
     this.scene = scene;
 
-    // Configurazione dimensionale
-    this.roadWidth = 6.4;
-    this.sidewalkWidth = 3.6;
-    this.segmentLength = 60; // Lunghezza di ogni blocco urbano
+    this.roadWidth = 6.8;
+    this.sidewalkWidth = 4.2;
+    this.segmentLength = 60;
     this.visibleSegments = 5;
 
     this.segments = [];
+    this.obstacles = []; // Active obstacle collision entities
     this.furthestZ = 0;
 
-    // Inizializza texture riutilizzabili
+    // Procedural Textures
     this.asphaltTexture = TextureGenerator.createAsphaltTexture();
     this.asphaltTexture.repeat.set(1, 4);
 
     this.sidewalkTexture = TextureGenerator.createSidewalkTexture();
     this.sidewalkTexture.repeat.set(1.5, 6);
 
-    this.hazardTexture = TextureGenerator.createHazardStripesTexture();
-    this.hazardTexture.repeat.set(3, 1);
+    this.boxTexture = TextureGenerator.createBoxTexture();
 
-    this.manholeTexture = TextureGenerator.createManholeTexture();
-
-    // Materiali condivisi per massimizzare le performance WebGL
+    // Reusable Materials
     this.materials = {
-      asphalt: new THREE.MeshStandardMaterial({
-        map: this.asphaltTexture,
-        roughness: 0.85,
-        metalness: 0.05
-      }),
-      sidewalk: new THREE.MeshStandardMaterial({
-        map: this.sidewalkTexture,
-        roughness: 0.8,
-        metalness: 0.02
-      }),
-      curb: new THREE.MeshStandardMaterial({
-        color: 0x85878a,
-        roughness: 0.75
-      }),
-      metalPole: new THREE.MeshStandardMaterial({
-        color: 0x212529,
-        metalness: 0.85,
-        roughness: 0.3
-      }),
-      lampLight: new THREE.MeshBasicMaterial({
-        color: 0xfff3d1
-      }),
-      hazard: new THREE.MeshStandardMaterial({
-        map: this.hazardTexture,
-        roughness: 0.5
-      }),
-      manhole: new THREE.MeshStandardMaterial({
-        map: this.manholeTexture,
-        roughness: 0.7,
-        metalness: 0.6
-      }),
-      treeTrunk: new THREE.MeshStandardMaterial({
-        color: 0x4a2e18,
-        roughness: 0.9
-      }),
-      treeLeaves: new THREE.MeshStandardMaterial({
-        color: 0x2e6930,
-        roughness: 0.8
-      }),
-      trashBin: new THREE.MeshStandardMaterial({
-        color: 0x27ae60, // Verde cassonetto
-        roughness: 0.6
-      }),
-      benchWood: new THREE.MeshStandardMaterial({
-        color: 0x784212,
-        roughness: 0.7
-      })
+      asphalt: new THREE.MeshStandardMaterial({ map: this.asphaltTexture, roughness: 0.85 }),
+      sidewalk: new THREE.MeshStandardMaterial({ map: this.sidewalkTexture, roughness: 0.8 }),
+      curb: new THREE.MeshStandardMaterial({ color: 0x6e7073, roughness: 0.75 }),
+      metal: new THREE.MeshStandardMaterial({ color: 0x222426, metalness: 0.8, roughness: 0.3 }),
+      cardboard: new THREE.MeshStandardMaterial({ map: this.boxTexture, roughness: 0.85 }),
+      hazardOrange: new THREE.MeshStandardMaterial({ color: 0xe67e22, roughness: 0.5 }),
+      hazardRed: new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.5 }),
+      whiteStripe: new THREE.MeshStandardMaterial({ color: 0xfdfefe, roughness: 0.4 }),
+      scooterLime: new THREE.MeshStandardMaterial({ color: 0x00e676, roughness: 0.4 })
     };
 
-    // Crea un set di texture per i palazzi con stili diversi
     this.buildingTextures = [
       TextureGenerator.createBuildingTexture(0),
       TextureGenerator.createBuildingTexture(1),
@@ -95,21 +54,20 @@ export class City {
   }
 
   setupLighting() {
-    // 1. Luce Ambientale naturale (cielo metropolitano)
-    const ambientLight = new THREE.AmbientLight(0xced8e2, 0.75);
+    // Ambient Milanese afternoon light
+    const ambientLight = new THREE.AmbientLight(0xd5dfe8, 0.75);
     this.scene.add(ambientLight);
 
-    // 2. Luce Solare Direzionale (pomeriggio dorato / ombre realistiche)
-    const sunLight = new THREE.DirectionalLight(0xfffaed, 1.25);
-    sunLight.position.set(28, 48, 18);
+    // Warm directional sun
+    const sunLight = new THREE.DirectionalLight(0xfff5e4, 1.25);
+    sunLight.position.set(24, 45, 15);
     sunLight.castShadow = true;
-
     sunLight.shadow.mapSize.width = 2048;
     sunLight.shadow.mapSize.height = 2048;
     sunLight.shadow.camera.near = 0.5;
     sunLight.shadow.camera.far = 140;
 
-    const d = 26;
+    const d = 28;
     sunLight.shadow.camera.left = -d;
     sunLight.shadow.camera.right = d;
     sunLight.shadow.camera.top = d;
@@ -119,16 +77,15 @@ export class City {
     this.sunLight = sunLight;
     this.scene.add(sunLight);
 
-    // 3. Nebbia atmosferica di profondità (sfumatura verso l'orizzonte urbano)
-    this.scene.fog = new THREE.Fog(0xb8c6d4, 45, 150);
+    // Atmospheric Milan haze
+    this.scene.fog = new THREE.Fog(0x9ca8b5, 40, 145);
   }
 
-  // Costruisce un singolo segmento di viale urbano lungo 60 metri
   createSegment(zStart) {
     const group = new THREE.Group();
     group.position.z = zStart;
 
-    // --- CARREGGIATA ASFALTATA ---
+    // --- CARREGGIATA VIA SAVONA ---
     const roadGeo = new THREE.PlaneGeometry(this.roadWidth, this.segmentLength);
     const roadMesh = new THREE.Mesh(roadGeo, this.materials.asphalt);
     roadMesh.rotation.x = -Math.PI / 2;
@@ -136,36 +93,18 @@ export class City {
     roadMesh.receiveShadow = true;
     group.add(roadMesh);
 
-    // Tombini in ghisa lungo la carreggiata
-    if (Math.random() < 0.6) {
-      const manhole = new THREE.Mesh(new THREE.CircleGeometry(0.42, 20), this.materials.manhole);
-      manhole.rotation.x = -Math.PI / 2;
-      manhole.position.set((Math.random() > 0.5 ? 1 : -1) * 1.5, 0.003, -Math.random() * this.segmentLength);
-      group.add(manhole);
-    }
-
-    // Strisce pedonali a inizio blocco
-    const crosswalkGeo = new THREE.PlaneGeometry(0.48, 4.2);
-    const crosswalkMat = new THREE.MeshStandardMaterial({ color: 0xededed, roughness: 0.7 });
-    for (let c = -2.4; c <= 2.4; c += 0.8) {
-      const stripe = new THREE.Mesh(crosswalkGeo, crosswalkMat);
-      stripe.rotation.x = -Math.PI / 2;
-      stripe.position.set(c, 0.002, -4);
-      group.add(stripe);
-    }
-
-    // --- MARCIAPIEDI DESTRO E SINISTRO CON CORDOLO ---
+    // --- MARCIAPIEDI DESTRO E SINISTRO ---
     [-1, 1].forEach((side) => {
       const xCenter = side * (this.roadWidth / 2 + this.sidewalkWidth / 2);
 
-      // Piano marciapiede (leggermente rialzato di 15cm)
+      // Piattaforma marciapiede
       const walkGeo = new THREE.BoxGeometry(this.sidewalkWidth, 0.15, this.segmentLength);
       const walkMesh = new THREE.Mesh(walkGeo, this.materials.sidewalk);
       walkMesh.position.set(xCenter, 0.075, -this.segmentLength / 2);
       walkMesh.receiveShadow = true;
       group.add(walkMesh);
 
-      // Cordolo in pietra di granito
+      // Cordolo
       const curbX = side * (this.roadWidth / 2 + 0.08);
       const curbGeo = new THREE.BoxGeometry(0.16, 0.16, this.segmentLength);
       const curbMesh = new THREE.Mesh(curbGeo, this.materials.curb);
@@ -173,13 +112,13 @@ export class City {
       group.add(curbMesh);
     });
 
-    // --- PALAZZI URBANI A SCHIERA SUI LATI ---
+    // --- PALAZZI LOFT & SHOWROOM VIA SAVONA ---
     [-1, 1].forEach((side) => {
       let currentZ = 0;
       while (currentZ < this.segmentLength) {
-        const buildingWidth = 12 + Math.random() * 8;
-        const buildingHeight = 16 + Math.random() * 20; // 4-8 piani
-        const buildingDepth = 15;
+        const buildingWidth = 14 + Math.random() * 8;
+        const buildingHeight = 18 + Math.random() * 16;
+        const buildingDepth = 16;
 
         const xPos = side * (this.roadWidth / 2 + this.sidewalkWidth + buildingDepth / 2);
         const zPos = -(currentZ + buildingWidth / 2);
@@ -187,8 +126,8 @@ export class City {
         const texIndex = Math.floor(Math.random() * this.buildingTextures.length);
         const bldgMat = new THREE.MeshStandardMaterial({
           map: this.buildingTextures[texIndex],
-          roughness: 0.75,
-          metalness: 0.1
+          roughness: 0.8,
+          metalness: 0.08
         });
 
         const bldgGeo = new THREE.BoxGeometry(buildingDepth, buildingHeight, buildingWidth);
@@ -198,42 +137,40 @@ export class City {
         bldgMesh.receiveShadow = true;
         group.add(bldgMesh);
 
-        // Cornicione superiore sul tetto
-        const roofTrimGeo = new THREE.BoxGeometry(buildingDepth + 0.4, 0.5, buildingWidth + 0.4);
-        const roofTrim = new THREE.Mesh(roofTrimGeo, this.materials.curb);
-        roofTrim.position.set(xPos, buildingHeight + 0.25, zPos);
-        group.add(roofTrim);
-
         currentZ += buildingWidth + 0.2;
       }
     });
 
-    // --- ELEMENTI DI ARREDO URBANO (Lampioni, Cantieri, Alberi, Panchine) ---
-    // 1. Lampioni stradali (uno ogni ~28m)
-    for (let lz = 12; lz < this.segmentLength; lz += 28) {
-      const side = Math.random() > 0.5 ? 1 : -1;
-      const lx = side * (this.roadWidth / 2 + 0.6);
-      this.addStreetlight(group, lx, -lz, side);
+    // --- OSTACOLI DA SCHIVARE O SALTARE ---
+    // 1. Pila di scatole da consegna showroom ("FRAGILE // MILANO DESIGN")
+    if (Math.random() < 0.75) {
+      const boxZ = -(10 + Math.random() * (this.segmentLength - 20));
+      const boxSide = Math.random() > 0.5 ? 1 : -1;
+      const boxX = boxSide * (1.2 + Math.random() * 2.8);
+      this.spawnBoxObstacle(group, boxX, boxZ, zStart);
     }
 
-    // 2. Cantiere stradale (transenne e birilli, elemento iconico per gli Umarell!)
+    // 2. Monopattino elettrico abbandonato sul marciapiede / bordo strada
     if (Math.random() < 0.65) {
-      const cantiereZ = -(15 + Math.random() * (this.segmentLength - 30));
-      const cSide = Math.random() > 0.5 ? 1 : -1;
-      this.addConstructionSite(group, cSide * 3.6, cantiereZ);
+      const scootZ = -(18 + Math.random() * (this.segmentLength - 25));
+      const scootSide = Math.random() > 0.5 ? 1 : -1;
+      const scootX = scootSide * (1.8 + Math.random() * 2.2);
+      this.spawnScooterObstacle(group, scootX, scootZ, zStart);
     }
 
-    // 3. Alberi di viale
-    for (let tz = 6; tz < this.segmentLength; tz += 18) {
-      const side = Math.random() > 0.5 ? 1 : -1;
-      const tx = side * (this.roadWidth / 2 + 2.4);
-      this.addTree(group, tx, -tz);
+    // 3. Tavolino e sedie aperitivo milanese
+    if (Math.random() < 0.55) {
+      const tableZ = -(25 + Math.random() * (this.segmentLength - 30));
+      const tableSide = Math.random() > 0.5 ? 1 : -1;
+      const tableX = tableSide * (3.2 + Math.random() * 1.2);
+      this.spawnBistroObstacle(group, tableX, tableZ, zStart);
     }
 
-    // 4. Cassonetti o panchine
+    // 4. Barriera cantiere A2A / fibra ottica
     if (Math.random() < 0.5) {
-      const bx = (Math.random() > 0.5 ? 1 : -1) * (this.roadWidth / 2 + 2.6);
-      this.addTrashBin(group, bx, -Math.random() * this.segmentLength);
+      const barrierZ = -(8 + Math.random() * (this.segmentLength - 16));
+      const barrierX = (Math.random() > 0.5 ? 1 : -1) * 2.2;
+      this.spawnBarrierObstacle(group, barrierX, barrierZ, zStart);
     }
 
     this.scene.add(group);
@@ -244,75 +181,126 @@ export class City {
     };
   }
 
-  addStreetlight(parent, x, z, side) {
-    const poleHeight = 5.2;
-    // Palo verticale
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, poleHeight, 10), this.materials.metalPole);
-    pole.position.set(x, poleHeight / 2, z);
-    pole.castShadow = true;
-    parent.add(pole);
+  // Obstacle 1: Cardboard Box Stack
+  spawnBoxObstacle(parent, x, relZ, zStart) {
+    const boxGroup = new THREE.Group();
+    boxGroup.position.set(x, 0.35, relZ);
 
-    // Braccio ricurvo verso la strada
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 0.08), this.materials.metalPole);
-    arm.position.set(x - side * 0.45, poleHeight - 0.1, z);
-    parent.add(arm);
+    const box = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), this.materials.cardboard);
+    box.castShadow = true;
+    boxGroup.add(box);
 
-    // Lanterna LED
-    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.2), this.materials.lampLight);
-    lamp.position.set(x - side * 0.85, poleHeight - 0.15, z);
-    parent.add(lamp);
-  }
+    parent.add(boxGroup);
 
-  addConstructionSite(parent, x, z) {
-    const cantiereGroup = new THREE.Group();
-    cantiereGroup.position.set(x, 0, z);
-
-    // Transenna zebrata bianco-rossa
-    const barrierGeo = new THREE.BoxGeometry(0.1, 0.8, 2.4);
-    const barrier = new THREE.Mesh(barrierGeo, this.materials.hazard);
-    barrier.position.set(0, 0.45, 0);
-    barrier.castShadow = true;
-    cantiereGroup.add(barrier);
-
-    // Piedi in metallo della transenna
-    [-1.0, 1.0].forEach(pz => {
-      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.04, 0.08), this.materials.metalPole);
-      foot.position.set(0, 0.02, pz);
-      cantiereGroup.add(foot);
+    this.obstacles.push({
+      mesh: boxGroup,
+      x: x,
+      z: zStart + relZ,
+      radius: 0.6,
+      height: 0.75,
+      name: "Delivery Box Stack"
     });
-
-    // Cono stradale arancione
-    const coneMat = new THREE.MeshStandardMaterial({ color: 0xe67e22 });
-    const cone = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.55, 12), coneMat);
-    cone.position.set(0.4, 0.28, 0.6);
-    cone.castShadow = true;
-    cantiereGroup.add(cone);
-
-    parent.add(cantiereGroup);
   }
 
-  addTree(parent, x, z) {
-    const trunkHeight = 2.4;
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, trunkHeight, 10), this.materials.treeTrunk);
-    trunk.position.set(x, trunkHeight / 2 + 0.15, z);
-    trunk.castShadow = true;
-    parent.add(trunk);
+  // Obstacle 2: Dumped Electric Scooter
+  spawnScooterObstacle(parent, x, relZ, zStart) {
+    const scootGroup = new THREE.Group();
+    scootGroup.position.set(x, 0.1, relZ);
+    scootGroup.rotation.z = 0.85; // Knocked over on its side
 
-    const foliage = new THREE.Mesh(new THREE.SphereGeometry(1.2, 12, 12), this.materials.treeLeaves);
-    foliage.position.set(x, trunkHeight + 0.9, z);
-    foliage.castShadow = true;
-    parent.add(foliage);
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.95), this.materials.scooterLime);
+    deck.castShadow = true;
+    scootGroup.add(deck);
+
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.0, 8), this.materials.metal);
+    pole.position.set(0, 0.45, 0.4);
+    scootGroup.add(pole);
+
+    parent.add(scootGroup);
+
+    this.obstacles.push({
+      mesh: scootGroup,
+      x: x,
+      z: zStart + relZ,
+      radius: 0.65,
+      height: 0.45,
+      name: "Dumped E-Scooter"
+    });
   }
 
-  addTrashBin(parent, x, z) {
-    const bin = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.85, 0.9), this.materials.trashBin);
-    bin.position.set(x, 0.55, z);
-    bin.castShadow = true;
-    parent.add(bin);
+  // Obstacle 3: Outdoor Bistro Table & Chairs
+  spawnBistroObstacle(parent, x, relZ, zStart) {
+    const bistroGroup = new THREE.Group();
+    bistroGroup.position.set(x, 0, relZ);
+
+    // Round cocktail table
+    const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.04, 16), this.materials.metal);
+    tableTop.position.y = 0.78;
+    tableTop.castShadow = true;
+    bistroGroup.add(tableTop);
+
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.76, 8), this.materials.metal);
+    leg.position.y = 0.38;
+    bistroGroup.add(leg);
+
+    parent.add(bistroGroup);
+
+    this.obstacles.push({
+      mesh: bistroGroup,
+      x: x,
+      z: zStart + relZ,
+      radius: 0.55,
+      height: 0.85,
+      name: "Aperitivo Table"
+    });
+  }
+
+  // Obstacle 4: Roadworks Hazard Barrier
+  spawnBarrierObstacle(parent, x, relZ, zStart) {
+    const barrierGroup = new THREE.Group();
+    barrierGroup.position.set(x, 0.42, relZ);
+
+    const board = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.65, 0.08), this.materials.hazardOrange);
+    board.castShadow = true;
+    barrierGroup.add(board);
+
+    parent.add(barrierGroup);
+
+    this.obstacles.push({
+      mesh: barrierGroup,
+      x: x,
+      z: zStart + relZ,
+      radius: 0.9,
+      height: 0.8,
+      name: "Roadworks Barrier"
+    });
+  }
+
+  // Collision Check between Kurt and Street Obstacles
+  checkCollisions(kurt) {
+    for (let i = 0; i < this.obstacles.length; i++) {
+      const obs = this.obstacles[i];
+      const dx = kurt.position.x - obs.x;
+      const dz = kurt.position.z - obs.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+
+      if (dist < obs.radius) {
+        // If Kurt is jumping high enough to clear the obstacle
+        if (kurt.position.y > obs.height - 0.1) {
+          // Cleared via jump!
+          continue;
+        }
+
+        // Stumble!
+        kurt.stumble();
+        return obs;
+      }
+    }
+    return null;
   }
 
   buildInitialCity() {
-    let currentZ = 30; // Inizia leggermente dietro allo skater
+    let currentZ = 20;
     for (let i = 0; i < this.visibleSegments; i++) {
       const seg = this.createSegment(currentZ);
       this.segments.push(seg);
@@ -321,40 +309,38 @@ export class City {
     this.furthestZ = currentZ;
   }
 
-  update(skaterZ) {
-    // Muovi il sole assieme allo skater per mantenere ombre nitide e uniformi
+  update(kurtZ) {
     if (this.sunLight) {
-      this.sunLight.position.z = skaterZ + 18;
-      this.sunLight.target.position.z = skaterZ - 10;
+      this.sunLight.position.z = kurtZ + 16;
+      this.sunLight.target.position.z = kurtZ - 10;
       this.sunLight.target.updateMatrixWorld();
     }
 
-    // Aggiungi nuovi segmenti in avanti man mano che lo skater procede
-    while (this.furthestZ > skaterZ - 140) {
+    // Add new street segments ahead
+    while (this.furthestZ > kurtZ - 140) {
       const newSeg = this.createSegment(this.furthestZ);
       this.segments.push(newSeg);
       this.furthestZ -= this.segmentLength;
     }
 
-    // Rimuovi i segmenti che sono rimasti molto dietro alla telecamera
-    while (this.segments.length > 0 && this.segments[0].zEnd > skaterZ + 45) {
+    // Remove segments far behind
+    while (this.segments.length > 0 && this.segments[0].zEnd > kurtZ + 35) {
       const oldSeg = this.segments.shift();
       this.scene.remove(oldSeg.group);
-      // Pulizia memoria geometrie/mesh
-      oldSeg.group.traverse(child => {
-        if (child.geometry) child.geometry.dispose();
-      });
+      oldSeg.group.traverse(c => { if (c.geometry) c.geometry.dispose(); });
+
+      // Clean up old obstacles
+      this.obstacles = this.obstacles.filter(o => o.z < kurtZ + 35);
     }
   }
 
   reset() {
     this.segments.forEach(seg => {
       this.scene.remove(seg.group);
-      seg.group.traverse(child => {
-        if (child.geometry) child.geometry.dispose();
-      });
+      seg.group.traverse(c => { if (c.geometry) c.geometry.dispose(); });
     });
     this.segments = [];
+    this.obstacles = [];
     this.furthestZ = 0;
     this.buildInitialCity();
   }

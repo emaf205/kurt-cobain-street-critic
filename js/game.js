@@ -1,9 +1,10 @@
 /* ==========================================================================
-   STREET CRITIC: Skater Polemico - Game Core & Main Loop
-   Three.js WebGL Renderer, gestione telecamera cinematografica, input e stati
+   VIA SAVONA CRITIC: Kurt in Milan - Game Core & Main Loop
+   Three.js WebGL engine with free 360° movement, Kurt Cobain character controller,
+   Milanese pedestrians, interactive obstacles, and dynamic cinematic follow camera.
    ========================================================================== */
 
-import { Skater } from './skater.js';
+import { KurtCharacter } from './skater.js';
 import { PedestrianManager } from './pedestrians.js';
 import { City } from './city.js';
 import { UIManager } from './ui.js';
@@ -16,15 +17,14 @@ class Game {
 
     this.isPlaying = false;
     this.isPaused = false;
+    this.cameraMode = 0; // 0: 3rd Person Follow, 1: Low Skate/Shoe Cam, 2: Overhead Aerial
 
-    this.cameraMode = 0; // 0: Terza Persona, 1: Skate-Cam Bassa, 2: Panoramica Alta
-
-    // Input state
+    // Input state (Full 360° Omnidirectional + Actions)
     this.keys = {
-      left: false,
-      right: false,
       up: false,
       down: false,
+      left: false,
+      right: false,
       jump: false
     };
 
@@ -33,26 +33,22 @@ class Game {
     this.initInputs();
     this.setupEvents();
 
-    // Avvia loop di rendering
     this.animate = this.animate.bind(this);
     requestAnimationFrame(this.animate);
   }
 
   initThree() {
-    // 1. Scena
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0xb8c6d4); // Colore cielo metropolitano
+    this.scene.background = new THREE.Color(0x9ca8b5); // Atmospheric Milanese sky
 
-    // 2. Camera prospettica
     this.camera = new THREE.PerspectiveCamera(
       60,
       window.innerWidth / window.innerHeight,
       0.1,
       250
     );
-    this.camera.position.set(0, 2.5, 5.5);
+    this.camera.position.set(0, 2.6, 6.0);
 
-    // 3. Renderer con impostazioni per resa realistica
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
@@ -61,15 +57,12 @@ class Game {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // Ombre realistiche Soft Shadow (PCFSoft)
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    // Tone mapping fotografico cinematografico (ACES Filmic)
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
 
-    // Gestione ridimensionamento finestra
     window.addEventListener('resize', () => {
       this.camera.aspect = window.innerWidth / window.innerHeight;
       this.camera.updateProjectionMatrix();
@@ -79,26 +72,32 @@ class Game {
 
   initEntities() {
     this.city = new City(this.scene);
-    this.skater = new Skater(this.scene);
+    this.kurt = new KurtCharacter(this.scene);
     this.pedestrians = new PedestrianManager(this.scene);
     this.ui = new UIManager();
 
-    // Collega l'evento dialogo tra pedoni e UI
     this.pedestrians.onDialogueTriggered = (dialogue, pedestrianObj) => {
       this.ui.showDialogue(dialogue, pedestrianObj);
     };
   }
 
   initInputs() {
-    // Tastiera
     window.addEventListener('keydown', (e) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
-        e.preventDefault(); // Evita scroll pagina
+        e.preventDefault();
       }
 
       if (!this.isPlaying) return;
 
       switch (e.code) {
+        case 'ArrowUp':
+        case 'KeyW':
+          this.keys.up = true;
+          break;
+        case 'ArrowDown':
+        case 'KeyS':
+          this.keys.down = true;
+          break;
         case 'ArrowLeft':
         case 'KeyA':
           this.keys.left = true;
@@ -107,19 +106,14 @@ class Game {
         case 'KeyD':
           this.keys.right = true;
           break;
-        case 'ArrowUp':
-        case 'KeyW':
-          this.keys.up = true;
-          this.skater.push();
-          break;
-        case 'ArrowDown':
-        case 'KeyS':
-          this.keys.down = true;
-          this.skater.brake(true);
-          break;
         case 'Space':
           this.keys.jump = true;
-          this.skater.ollie();
+          this.kurt.jump();
+          break;
+        case 'ShiftLeft':
+        case 'ShiftRight':
+          // Manual burst into skate mode
+          this.kurt.triggerSkateBurst();
           break;
         case 'KeyC':
           this.cycleCamera();
@@ -138,6 +132,14 @@ class Game {
 
     window.addEventListener('keyup', (e) => {
       switch (e.code) {
+        case 'ArrowUp':
+        case 'KeyW':
+          this.keys.up = false;
+          break;
+        case 'ArrowDown':
+        case 'KeyS':
+          this.keys.down = false;
+          break;
         case 'ArrowLeft':
         case 'KeyA':
           this.keys.left = false;
@@ -146,63 +148,43 @@ class Game {
         case 'KeyD':
           this.keys.right = false;
           break;
-        case 'ArrowUp':
-        case 'KeyW':
-          this.keys.up = false;
-          break;
-        case 'ArrowDown':
-        case 'KeyS':
-          this.keys.down = false;
-          this.skater.brake(false);
-          break;
         case 'Space':
           this.keys.jump = false;
           break;
       }
     });
 
-    // Supporto Touch / Comandi su schermo mobile
+    // Touch controls
     const bindBtn = (id, onDown, onUp) => {
       const el = document.getElementById(id);
       if (!el) return;
-      el.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        onDown();
-      });
-      el.addEventListener('pointerup', (e) => {
-        e.preventDefault();
-        if (onUp) onUp();
-      });
-      el.addEventListener('pointerleave', (e) => {
-        if (onUp) onUp();
-      });
+      el.addEventListener('pointerdown', (e) => { e.preventDefault(); onDown(); });
+      el.addEventListener('pointerup', (e) => { e.preventDefault(); if (onUp) onUp(); });
+      el.addEventListener('pointerleave', (e) => { if (onUp) onUp(); });
     };
 
+    bindBtn('btn-touch-up', () => { this.keys.up = true; }, () => { this.keys.up = false; });
+    bindBtn('btn-touch-down', () => { this.keys.down = true; }, () => { this.keys.down = false; });
     bindBtn('btn-touch-left', () => { this.keys.left = true; }, () => { this.keys.left = false; });
     bindBtn('btn-touch-right', () => { this.keys.right = true; }, () => { this.keys.right = false; });
-    bindBtn('btn-touch-push', () => { this.skater.push(); });
-    bindBtn('btn-touch-ollie', () => { this.skater.ollie(); });
+    bindBtn('btn-touch-jump', () => { this.kurt.jump(); });
+    bindBtn('btn-touch-skate', () => { this.kurt.triggerSkateBurst(); });
   }
 
   setupEvents() {
-    // Tasto Avvia Gioco
     const startBtn = document.getElementById('btn-start-game');
     if (startBtn) {
       startBtn.addEventListener('click', () => {
-        sound.init(); // Attiva Web Audio API su gesto utente
+        sound.init();
         this.startGame();
       });
     }
 
-    // Tasto Riavvia
     const restartBtn = document.getElementById('btn-restart');
     if (restartBtn) {
-      restartBtn.addEventListener('click', () => {
-        this.restartGame();
-      });
+      restartBtn.addEventListener('click', () => this.restartGame());
     }
 
-    // Tasti Mute e Opzioni HUD
     const muteAudioBtn = document.getElementById('btn-toggle-sound');
     if (muteAudioBtn) {
       muteAudioBtn.addEventListener('click', () => this.toggleMuteAudio());
@@ -227,9 +209,9 @@ class Game {
   }
 
   restartGame() {
-    this.skater.position.set(0, 0, 0);
-    this.skater.laneX = 0;
-    this.skater.speed = this.skater.baseSpeed;
+    this.kurt.position.set(0, 0, 0);
+    this.kurt.rotation = 0;
+    this.kurt.currentSpeed = 0;
     this.city.reset();
     this.pedestrians.reset();
     this.ui.reset();
@@ -246,65 +228,63 @@ class Game {
   toggleMuteAudio() {
     const isMuted = sound.toggleMute();
     const btn = document.getElementById('btn-toggle-sound');
-    if (btn) btn.textContent = isMuted ? '🔇 Audio Spento' : '🔊 Effetti Audio';
+    if (btn) btn.textContent = isMuted ? '🔇 Audio Off' : '🔊 Grunge Audio';
   }
 
   toggleMuteVoice() {
     const isMuted = sound.toggleVoice();
     const btn = document.getElementById('btn-toggle-voice');
-    if (btn) btn.textContent = isMuted ? '🙊 Voce Spenta' : '🗣️ Voce Skater';
+    if (btn) btn.textContent = isMuted ? '🙊 Voice Muted' : '🗣️ Kurt Voice';
   }
 
   cycleCamera() {
     this.cameraMode = (this.cameraMode + 1) % 3;
     const camBtn = document.getElementById('btn-toggle-camera');
-    const names = ['🎥 Terza Persona', '🛹 Skate Cam Bassa', '🏙️ Vista Panoramica'];
+    const names = ['🎥 3rd Person', '🛹 Low Street Cam', '🏙️ Overhead Loft'];
     if (camBtn) camBtn.textContent = names[this.cameraMode];
   }
 
   updateCamera(delta) {
-    const skPos = this.skater.position;
+    const kp = this.kurt.position;
     let targetX, targetY, targetZ;
     let lookX, lookY, lookZ;
 
     if (this.cameraMode === 0) {
-      // 0: Terza persona dinamica fluida (Follow cam realistica)
-      targetX = skPos.x * 0.65;
-      targetY = 2.2 + skPos.y * 0.4;
-      targetZ = skPos.z + 5.2;
+      // Dynamic 3rd person follow behind Kurt
+      targetX = kp.x * 0.75;
+      targetY = 2.4 + kp.y * 0.4;
+      targetZ = kp.z + 5.5;
 
-      lookX = skPos.x * 0.35;
-      lookY = 1.1 + skPos.y * 0.5;
-      lookZ = skPos.z - 7.5;
+      lookX = kp.x * 0.4;
+      lookY = 1.2 + kp.y * 0.5;
+      lookZ = kp.z - 6.5;
     } else if (this.cameraMode === 1) {
-      // 1: Skate Cam rasoterra
-      targetX = skPos.x;
-      targetY = 0.55 + skPos.y * 0.3;
-      targetZ = skPos.z + 2.6;
+      // Low street-level camera
+      targetX = kp.x;
+      targetY = 0.55 + kp.y * 0.3;
+      targetZ = kp.z + 2.8;
 
-      lookX = skPos.x;
+      lookX = kp.x;
       lookY = 0.5;
-      lookZ = skPos.z - 9.0;
+      lookZ = kp.z - 8.5;
     } else {
-      // 2: Panoramica aerea urbana
-      targetX = skPos.x * 0.3;
-      targetY = 6.8;
-      targetZ = skPos.z + 9.8;
+      // Overhead Milan loft view
+      targetX = kp.x * 0.3;
+      targetY = 7.5;
+      targetZ = kp.z + 10.5;
 
-      lookX = skPos.x * 0.2;
+      lookX = kp.x * 0.2;
       lookY = 0.8;
-      lookZ = skPos.z - 8.0;
+      lookZ = kp.z - 7.5;
     }
 
-    // Interpolazione morbida (Lerp) per sensazione cinematografica realistica
     this.camera.position.x = THREE.MathUtils.lerp(this.camera.position.x, targetX, 0.12);
     this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, targetY, 0.12);
-    this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, targetZ, 0.15);
+    this.camera.position.z = THREE.MathUtils.lerp(this.camera.position.z, targetZ, 0.14);
 
     this.camera.lookAt(lookX, lookY, lookZ);
 
-    // FOV dinamico che si allarga con l'aumentare della velocità per enfatizzare il movimento
-    const targetFOV = 58 + (this.skater.speed / this.skater.maxSpeed) * 12;
+    const targetFOV = 58 + (this.kurt.currentSpeed / this.kurt.skateSpeed) * 12;
     this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFOV, 0.08);
     this.camera.updateProjectionMatrix();
   }
@@ -315,38 +295,36 @@ class Game {
     const delta = Math.min(this.clock.getDelta(), 0.05);
 
     if (this.isPlaying && !this.isPaused) {
-      // 1. Gestione sterzata dello skater
-      let steerDir = 0;
-      if (this.keys.left) steerDir -= 1;
-      if (this.keys.right) steerDir += 1;
-      this.skater.steer(steerDir);
+      // 1. Update Kurt Cobain Character
+      this.kurt.update(delta, this.keys);
 
-      // 2. Aggiornamento entità
-      this.skater.update(delta);
-      this.city.update(this.skater.position.z);
-      this.pedestrians.update(delta, this.skater);
+      // 2. Update Via Savona City & Check Obstacle Collisions
+      this.city.update(this.kurt.position.z);
+      const hitObstacle = this.city.checkCollisions(this.kurt);
+      if (hitObstacle) {
+        this.ui.showObstacleHitAlert(hitObstacle.name);
+      }
 
-      // 3. Aggiornamento telecamera
+      // 3. Update Milanese Pedestrians & Check Proximity
+      this.pedestrians.update(delta, this.kurt);
+
+      // 4. Update Camera & UI
       this.updateCamera(delta);
-
-      // 4. Aggiornamento interfaccia UI (fumetti 3D proiettati, tachimetro, bacheca)
-      this.ui.updateBubblesPosition(this.camera, this.skater.position);
-      this.ui.updateHUD(this.skater.speed, this.skater.position.z);
+      this.ui.updateBubblesPosition(this.camera, this.kurt.position);
+      this.ui.updateHUD(this.kurt.currentSpeed, this.kurt.position.z);
     } else if (!this.isPlaying) {
-      // Animazione panoramica idling attorno allo skater prima di avviare il gioco
+      // Idle turntable camera before starting
       const time = Date.now() * 0.0008;
       this.camera.position.x = Math.sin(time) * 4.5;
       this.camera.position.z = Math.cos(time) * 4.5;
-      this.camera.position.y = 2.0;
+      this.camera.position.y = 2.2;
       this.camera.lookAt(0, 0.9, 0);
     }
 
-    // Render WebGL
     this.renderer.render(this.scene, this.camera);
   }
 }
 
-// Inizializza il gioco al caricamento del DOM
 window.addEventListener('DOMContentLoaded', () => {
-  window.streetCriticGame = new Game();
+  window.viaSavonaGame = new Game();
 });

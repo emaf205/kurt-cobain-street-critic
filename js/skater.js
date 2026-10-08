@@ -1,472 +1,515 @@
 /* ==========================================================================
-   STREET CRITIC: Skater Polemico - Skater & Skateboard 3D Entity
-   Fisica realistica di skate, modello 3D proporzionato, deck con truck e ruote,
-   e animazioni fluide (carving lean, push col piede, powerslide, ollie, gesti).
+   VIA SAVONA CRITIC: Kurt Cobain 3D Character Controller
+   Grunge style: Shaggy blonde hair, oversized olive knit cardigan, vintage tee,
+   ripped jeans, Converse sneakers. Walks freely in 360°, carries board under arm,
+   triggers random/manual skate bursts, hops over obstacles, and roasts pedestrians.
    ========================================================================== */
 
 import { TextureGenerator } from './textures.js';
 import { sound } from './audio.js';
 
-export class Skater {
+export class KurtCharacter {
   constructor(scene) {
     this.scene = scene;
 
-    // Parametri di movimento e fisica
+    // Position and Navigation (Free 360° Movement)
     this.position = new THREE.Vector3(0, 0, 0);
-    this.speed = 0.18; // Velocità di crociera base (m/frame)
-    this.baseSpeed = 0.18;
-    this.maxSpeed = 0.45;
-    this.minSpeed = 0.05;
-    this.lateralSpeed = 0.16;
+    this.rotation = 0; // Y-rotation angle in radians
+    this.velocity = new THREE.Vector3();
 
-    this.laneX = 0; // Posizione laterale (-3.5 a +3.5)
-    this.targetLaneX = 0;
+    // Movement speeds
+    this.walkSpeed = 4.2;   // Normal walking speed (m/s)
+    this.skateSpeed = 9.8;  // High-speed skate burst (m/s)
+    this.currentSpeed = 0;
 
-    // Stati di animazione
-    this.isPushing = false;
-    this.pushTimer = 0;
+    // Locomotion States
+    this.isSkating = false;
+    this.skateBurstTimer = 0;
+    this.nextRandomSkateTimer = 12 + Math.random() * 10; // Random burst trigger
 
-    this.isBraking = false;
-    this.brakeTimer = 0;
+    this.isWalking = false;
+    this.walkCycle = 0;
+    this.footstepTimer = 0;
 
+    // Jump / Obstacle Leap
     this.isJumping = false;
-    this.jumpTimer = 0;
-    this.jumpHeight = 0;
+    this.jumpY = 0;
     this.jumpVelocity = 0;
 
-    this.turnAngle = 0; // Angolo di sterzata
-    this.leanAngle = 0; // Rollio della tavola sui truck
+    // Obstacle Stumble
+    this.isStumbling = false;
+    this.stumbleTimer = 0;
 
-    this.gestureTimer = 0; // Timer gesticolazione polemica
+    // Confrontation / Insulting Pedestrian
+    this.isInsulting = false;
+    this.insultTimer = 0;
 
-    // Gruppi Three.js
+    // 3D Groups
     this.group = new THREE.Group();
-    this.boardGroup = new THREE.Group();
-    this.skaterGroup = new THREE.Group();
+    this.bodyGroup = new THREE.Group();
+    this.skateboardMesh = null;
     this.wheels = [];
 
-    this.build3DModel();
+    this.buildKurtModel();
     this.scene.add(this.group);
   }
 
-  build3DModel() {
-    const gripTexture = TextureGenerator.createGripTapeTexture();
-    const bottomTexture = TextureGenerator.createDeckGraphicTexture();
-
+  buildKurtModel() {
     // -------------------------------------------------------------
-    // 1. TAVOLA DA SKATEBOOK (Deck con concavità, nose e tail rialzati)
+    // MATERIALS: Authentic Grunge Aesthetic (Kurt Cobain Style)
     // -------------------------------------------------------------
-    const deckMatTop = new THREE.MeshStandardMaterial({
-      map: gripTexture,
+    // Iconic olive green cardigan (MTV Unplugged knit style)
+    const cardiganMat = new THREE.MeshStandardMaterial({
+      color: 0x4a5d3f,
       roughness: 0.95,
       metalness: 0.05
     });
-    const deckMatBottom = new THREE.MeshStandardMaterial({
-      map: bottomTexture,
-      roughness: 0.35,
-      metalness: 0.1
-    });
-    const woodSideMat = new THREE.MeshStandardMaterial({
-      color: 0xc89658, // Legno d'acero
-      roughness: 0.7
-    });
 
-    // Materiali multi-faccia per il deck
-    const deckMaterials = [
-      woodSideMat, // destra
-      woodSideMat, // sinistra
-      deckMatTop,  // sopra (grip tape)
-      deckMatBottom, // sotto (grafica)
-      woodSideMat, // fronte (nose)
-      woodSideMat  // retro (tail)
-    ];
-
-    // Corpo centrale della tavola
-    const deckGeo = new THREE.BoxGeometry(0.32, 0.024, 0.92);
-    this.deckMesh = new THREE.Mesh(deckGeo, deckMaterials);
-    this.deckMesh.position.y = 0.105;
-    this.deckMesh.castShadow = true;
-    this.boardGroup.add(this.deckMesh);
-
-    // Nose rialzato
-    const noseGeo = new THREE.BoxGeometry(0.31, 0.022, 0.22);
-    const noseMesh = new THREE.Mesh(noseGeo, deckMaterials);
-    noseMesh.position.set(0, 0.125, -0.52);
-    noseMesh.rotation.x = 0.22; // Inclinazione nose
-    noseMesh.castShadow = true;
-    this.boardGroup.add(noseMesh);
-
-    // Tail rialzato
-    const tailGeo = new THREE.BoxGeometry(0.31, 0.022, 0.22);
-    const tailMesh = new THREE.Mesh(tailGeo, deckMaterials);
-    tailMesh.position.set(0, 0.125, 0.52);
-    tailMesh.rotation.x = -0.22; // Inclinazione tail
-    tailMesh.castShadow = true;
-    this.boardGroup.add(tailMesh);
-
-    // -------------------------------------------------------------
-    // 2. TRUCK IN METALLO & BUSHING
-    // -------------------------------------------------------------
-    const truckMat = new THREE.MeshStandardMaterial({
-      color: 0xb0bec5,
-      metalness: 0.85,
-      roughness: 0.25
-    });
-    const bushingMat = new THREE.MeshStandardMaterial({
-      color: 0x3498db, // Gommini blu
-      roughness: 0.4
-    });
-
-    [-0.32, 0.32].forEach((zPos) => {
-      // Baseplate + Kingpin
-      const baseplate = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.08), truckMat);
-      baseplate.position.set(0, 0.08, zPos);
-      this.boardGroup.add(baseplate);
-
-      // Gommino
-      const bushing = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.03, 12), bushingMat);
-      bushing.position.set(0, 0.065, zPos);
-      this.boardGroup.add(bushing);
-
-      // Asse orizzontale (Hanger)
-      const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.34, 16), truckMat);
-      axle.rotation.z = Math.PI / 2;
-      axle.position.set(0, 0.05, zPos);
-      axle.castShadow = true;
-      this.boardGroup.add(axle);
-    });
-
-    // -------------------------------------------------------------
-    // 3. RUOTE IN URETANO & CUSCINETTI A SFERA
-    // -------------------------------------------------------------
-    const wheelMat = new THREE.MeshStandardMaterial({
-      color: 0xf5f5f0, // Uretano bianco avorio naturale
-      roughness: 0.3,
-      metalness: 0.05
-    });
-    const bearingMat = new THREE.MeshStandardMaterial({
-      color: 0x2c3e50,
-      metalness: 0.9,
-      roughness: 0.1
-    });
-
-    const wheelGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.045, 18);
-    const bearingGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.048, 12);
-
-    const wheelPositions = [
-      [-0.17, 0.05, -0.32],
-      [0.17, 0.05, -0.32],
-      [-0.17, 0.05, 0.32],
-      [0.17, 0.05, 0.32]
-    ];
-
-    wheelPositions.forEach(pos => {
-      const wheelGroup = new THREE.Group();
-      wheelGroup.position.set(pos[0], pos[1], pos[2]);
-
-      const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-      wheel.rotation.z = Math.PI / 2;
-      wheel.castShadow = true;
-      wheelGroup.add(wheel);
-
-      const bearing = new THREE.Mesh(bearingGeo, bearingMat);
-      bearing.rotation.z = Math.PI / 2;
-      wheelGroup.add(bearing);
-
-      this.boardGroup.add(wheelGroup);
-      this.wheels.push(wheelGroup);
-    });
-
-    this.group.add(this.boardGroup);
-
-    // -------------------------------------------------------------
-    // 4. PERSONAGGIO SKATER (Streetwear proporzionato, posa skate)
-    // -------------------------------------------------------------
-    // Materiali abiti skater
-    const hoodieMat = new THREE.MeshStandardMaterial({
-      color: 0x212529, // Felpa oversize antracite scura
-      roughness: 0.8
-    });
-    const skinMat = new THREE.MeshStandardMaterial({
-      color: 0xf0b27a, // Carnagione naturale
-      roughness: 0.6
-    });
-    const pantsMat = new THREE.MeshStandardMaterial({
-      color: 0x2c3e50, // Pantaloni cargo scuri
+    // Faded thrift store tee underneath
+    const vintageTeeMat = new THREE.MeshStandardMaterial({
+      color: 0xdcdde1,
       roughness: 0.85
     });
-    const shoeMat = new THREE.MeshStandardMaterial({
-      color: 0x111111, // Scarpe skate scure con suola bianca
-      roughness: 0.5
-    });
-    const soleMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff, // Suola waffle bianca
-      roughness: 0.7
-    });
-    const capMat = new THREE.MeshStandardMaterial({
-      color: 0x8b0000, // Snapback bordeaux
-      roughness: 0.75
-    });
-    const headphoneMat = new THREE.MeshStandardMaterial({
-      color: 0xecf0f1,
-      metalness: 0.7,
-      roughness: 0.3
+
+    // Shaggy bleached blonde hair
+    const blondeHairMat = new THREE.MeshStandardMaterial({
+      color: 0xe5c97d,
+      roughness: 0.9
     });
 
-    // Bacino / Cintura
+    // Fair skin
+    const skinMat = new THREE.MeshStandardMaterial({
+      color: 0xf5cba7,
+      roughness: 0.65
+    });
+
+    // Light-wash ripped denim jeans
+    const denimMat = new THREE.MeshStandardMaterial({
+      color: 0x5a7d9a,
+      roughness: 0.9
+    });
+
+    // Beat-up black canvas Converse sneakers
+    const sneakerCanvasMat = new THREE.MeshStandardMaterial({
+      color: 0x181818,
+      roughness: 0.8
+    });
+    const dingyToeCapMat = new THREE.MeshStandardMaterial({
+      color: 0xded8c8, // Aged dirty white rubber
+      roughness: 0.6
+    });
+
+    // -------------------------------------------------------------
+    // 1. PELVIS & SLOUCHED TORSO
+    // -------------------------------------------------------------
     this.pelvis = new THREE.Group();
-    this.pelvis.position.set(0, 0.85, 0);
+    this.pelvis.position.y = 0.86;
 
-    // Busto Felpa (Hoodie con pieghe morbide)
-    const torsoGeo = new THREE.BoxGeometry(0.38, 0.52, 0.24);
-    this.torso = new THREE.Mesh(torsoGeo, hoodieMat);
-    this.torso.position.y = 0.3;
-    this.torso.castShadow = true;
-    this.pelvis.add(this.torso);
+    // Torso: Vintage Tee
+    const teeMesh = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.48, 0.22), vintageTeeMat);
+    teeMesh.position.y = 0.24;
+    teeMesh.castShadow = true;
+    this.pelvis.add(teeMesh);
 
-    // Collo & Cuffie over-ear al collo
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.1, 14), skinMat);
-    neck.position.y = 0.6;
+    // Over-Cardigan: Slouchy, open at front
+    const cardiganBack = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.54, 0.08), cardiganMat);
+    cardiganBack.position.set(0, 0.23, -0.09);
+    cardiganBack.castShadow = true;
+    this.pelvis.add(cardiganBack);
+
+    // Cardigan front flaps (left and right)
+    const cardLeft = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.52, 0.06), cardiganMat);
+    cardLeft.position.set(-0.16, 0.22, 0.1);
+    this.pelvis.add(cardLeft);
+
+    const cardRight = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.52, 0.06), cardiganMat);
+    cardRight.position.set(0.16, 0.22, 0.1);
+    this.pelvis.add(cardRight);
+
+    // -------------------------------------------------------------
+    // 2. HEAD & ICONIC SHAGGY BLONDE HAIR
+    // -------------------------------------------------------------
+    // Neck
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.075, 0.1, 10), skinMat);
+    neck.position.y = 0.52;
     this.pelvis.add(neck);
 
-    const headphoneArc = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.02, 8, 20), headphoneMat);
-    headphoneArc.rotation.x = Math.PI / 2;
-    headphoneArc.position.y = 0.58;
-    this.pelvis.add(headphoneArc);
-
-    // Testa
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.125, 20, 20), skinMat);
-    head.position.y = 0.72;
+    // Head
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.125, 16, 16), skinMat);
+    head.position.y = 0.64;
     head.castShadow = true;
     this.pelvis.add(head);
 
-    // Cappellino snapback al contrario (visiera all'indietro)
-    const capDome = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), capMat);
-    capDome.position.y = 0.74;
-    this.pelvis.add(capDome);
+    // Shaggy Blonde Hair Layers (Falling over face and shoulders)
+    this.hairGroup = new THREE.Group();
+    this.hairGroup.position.set(0, 0.65, 0);
 
-    const capVisor = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.015, 0.12), capMat);
-    capVisor.position.set(0, 0.74, 0.14); // Visiera rivolta all'indietro
-    capVisor.rotation.x = 0.1;
-    this.pelvis.add(capVisor);
+    // Main top hair dome
+    const hairTop = new THREE.Mesh(new THREE.SphereGeometry(0.145, 14, 14, 0, Math.PI * 2, 0, Math.PI / 1.7), blondeHairMat);
+    this.hairGroup.add(hairTop);
 
-    // Braccio Sinistro (Bilanciamento skate)
+    // Left locks over shoulder
+    const lockL = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.04, 0.28, 8), blondeHairMat);
+    lockL.position.set(-0.12, -0.06, 0.04);
+    lockL.rotation.z = 0.25;
+    this.hairGroup.add(lockL);
+
+    // Right locks over shoulder
+    const lockR = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.04, 0.28, 8), blondeHairMat);
+    lockR.position.set(0.12, -0.06, 0.04);
+    lockR.rotation.z = -0.25;
+    this.hairGroup.add(lockR);
+
+    // Back grunge hair fringe
+    const lockBack = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.22, 0.08), blondeHairMat);
+    lockBack.position.set(0, -0.07, -0.1);
+    this.hairGroup.add(lockBack);
+
+    // Front messy fringe dropping into eyes
+    const bangs = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.08, 0.06), blondeHairMat);
+    bangs.position.set(0, 0.05, 0.11);
+    bangs.rotation.x = -0.3;
+    this.hairGroup.add(bangs);
+
+    this.pelvis.add(this.hairGroup);
+
+    // -------------------------------------------------------------
+    // 3. ARMS
+    // -------------------------------------------------------------
+    // Left Arm (Carries skateboard when walking, or balances on board when skating)
     this.leftArm = new THREE.Group();
-    this.leftArm.position.set(-0.24, 0.52, 0);
-    const lUpperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.28, 12), hoodieMat);
-    lUpperArm.position.y = -0.14;
-    this.leftArm.add(lUpperArm);
-    const lHand = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), skinMat);
-    lHand.position.y = -0.3;
+    this.leftArm.position.set(-0.24, 0.44, 0);
+    const lSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.32, 10), cardiganMat);
+    lSleeve.position.y = -0.16;
+    this.leftArm.add(lSleeve);
+    const lHand = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), skinMat);
+    lHand.position.y = -0.34;
     this.leftArm.add(lHand);
     this.pelvis.add(this.leftArm);
 
-    // Braccio Destro (Per gesticolare e bilanciare)
+    // Right Arm (Swings naturally when walking, points during insults)
     this.rightArm = new THREE.Group();
-    this.rightArm.position.set(0.24, 0.52, 0);
-    const rUpperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.28, 12), hoodieMat);
-    rUpperArm.position.y = -0.14;
-    this.rightArm.add(rUpperArm);
-    const rHand = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), skinMat);
-    rHand.position.y = -0.3;
+    this.rightArm.position.set(0.24, 0.44, 0);
+    const rSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.32, 10), cardiganMat);
+    rSleeve.position.y = -0.16;
+    this.rightArm.add(rSleeve);
+    const rHand = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), skinMat);
+    rHand.position.y = -0.34;
     this.rightArm.add(rHand);
     this.pelvis.add(this.rightArm);
 
-    // Gamba Anteriore (Piede sinistro, piantato saldo a 45 gradi)
-    this.frontLeg = new THREE.Group();
-    this.frontLeg.position.set(-0.06, 0.0, -0.16);
-    const fThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.42, 12), pantsMat);
-    fThigh.position.y = -0.21;
-    this.frontLeg.add(fThigh);
-    const fShin = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.065, 0.38, 12), pantsMat);
-    fShin.position.set(0, -0.56, 0.05);
-    this.frontLeg.add(fShin);
+    // -------------------------------------------------------------
+    // 4. LEGS (Ripped denim jeans & Converse sneakers)
+    // -------------------------------------------------------------
+    // Left Leg
+    this.leftLeg = new THREE.Group();
+    this.leftLeg.position.set(-0.11, 0, 0);
+    const lThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.065, 0.42, 10), denimMat);
+    lThigh.position.y = -0.21;
+    this.leftLeg.add(lThigh);
 
-    // Scarpa anteriore
-    const fShoe = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.24), shoeMat);
-    fShoe.position.set(0, -0.74, 0.08);
-    fShoe.castShadow = true;
-    this.frontLeg.add(fShoe);
-    const fSole = new THREE.Mesh(new THREE.BoxGeometry(0.124, 0.02, 0.244), soleMat);
-    fSole.position.set(0, -0.78, 0.08);
-    this.frontLeg.add(fSole);
+    // Knee rip showing skin
+    const lRip = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.05, 0.02), skinMat);
+    lRip.position.set(0, -0.42, 0.06);
+    this.leftLeg.add(lRip);
 
-    this.pelvis.add(this.frontLeg);
+    const lShin = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.06, 0.38, 10), denimMat);
+    lShin.position.y = -0.58;
+    this.leftLeg.add(lShin);
 
-    // Gamba Posteriore (Piede destro, per spinta a terra o appoggio sul tail)
-    this.backLeg = new THREE.Group();
-    this.backLeg.position.set(0.06, 0.0, 0.24);
-    const bThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.42, 12), pantsMat);
-    bThigh.position.y = -0.21;
-    this.backLeg.add(bThigh);
-    this.bShin = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.065, 0.38, 12), pantsMat);
-    this.bShin.position.set(0, -0.56, -0.04);
-    this.backLeg.add(this.bShin);
+    // Converse Sneaker Left
+    const lShoe = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.07, 0.22), sneakerCanvasMat);
+    lShoe.position.set(0, -0.78, 0.04);
+    lShoe.castShadow = true;
+    this.leftLeg.add(lShoe);
+    const lToe = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.06, 10), dingyToeCapMat);
+    lToe.rotation.x = Math.PI / 2;
+    lToe.position.set(0, -0.78, 0.12);
+    this.leftLeg.add(lToe);
 
-    // Scarpa posteriore
-    const bShoe = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.24), shoeMat);
-    bShoe.position.set(0, -0.74, -0.02);
-    bShoe.castShadow = true;
-    this.backLeg.add(bShoe);
-    const bSole = new THREE.Mesh(new THREE.BoxGeometry(0.124, 0.02, 0.244), soleMat);
-    bSole.position.set(0, -0.78, -0.02);
-    this.backLeg.add(bSole);
+    this.pelvis.add(this.leftLeg);
 
-    this.pelvis.add(this.backLeg);
+    // Right Leg
+    this.rightLeg = new THREE.Group();
+    this.rightLeg.position.set(0.11, 0, 0);
+    const rThigh = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.065, 0.42, 10), denimMat);
+    rThigh.position.y = -0.21;
+    this.rightLeg.add(rThigh);
 
-    // Posa iniziale skater da cruising (leggera torsione e piegamento ginocchia)
-    this.pelvis.rotation.y = 0.45; // Angolato rispetto alla direzione di marcia
-    this.skaterGroup.add(this.pelvis);
-    this.group.add(this.skaterGroup);
+    // Knee rip showing skin
+    const rRip = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.05, 0.02), skinMat);
+    rRip.position.set(0, -0.42, 0.06);
+    this.rightLeg.add(rRip);
+
+    const rShin = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.06, 0.38, 10), denimMat);
+    rShin.position.y = -0.58;
+    this.rightLeg.add(rShin);
+
+    // Converse Sneaker Right
+    const rShoe = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.07, 0.22), sneakerCanvasMat);
+    rShoe.position.set(0, -0.78, 0.04);
+    rShoe.castShadow = true;
+    this.rightLeg.add(rShoe);
+    const rToe = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.06, 10), dingyToeCapMat);
+    rToe.rotation.x = Math.PI / 2;
+    rToe.position.set(0, -0.78, 0.12);
+    this.rightLeg.add(rToe);
+
+    this.pelvis.add(this.rightLeg);
+
+    this.bodyGroup.add(this.pelvis);
+    this.group.add(this.bodyGroup);
+
+    // -------------------------------------------------------------
+    // 5. SKATEBOARD ENTITY
+    // -------------------------------------------------------------
+    this.buildSkateboard();
   }
 
-  // Esegui spinta col piede (Push)
-  push() {
-    if (this.isPushing || this.isJumping || this.isBraking) return;
-    this.isPushing = true;
-    this.pushTimer = 0;
-    this.speed = Math.min(this.maxSpeed, this.speed + 0.08);
-    sound.playFootstep();
+  buildSkateboard() {
+    this.boardGroup = new THREE.Group();
+    const gripTex = TextureGenerator.createKurtGripTapeTexture();
+
+    const deckMat = new THREE.MeshStandardMaterial({
+      map: gripTex,
+      roughness: 0.9,
+      metalness: 0.05
+    });
+    const woodMat = new THREE.MeshStandardMaterial({ color: 0xb58448, roughness: 0.7 });
+    const metalMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.85, roughness: 0.2 });
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0xe8e6df, roughness: 0.35 });
+
+    // Deck
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.022, 0.86), [woodMat, woodMat, deckMat, woodMat, woodMat, woodMat]);
+    deck.position.y = 0.09;
+    deck.castShadow = true;
+    this.boardGroup.add(deck);
+
+    // Trucks & Wheels
+    [-0.28, 0.28].forEach(zPos => {
+      const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.32, 12), metalMat);
+      axle.rotation.z = Math.PI / 2;
+      axle.position.set(0, 0.05, zPos);
+      this.boardGroup.add(axle);
+
+      [-0.15, 0.15].forEach(xPos => {
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.04, 14), wheelMat);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(xPos, 0.05, zPos);
+        wheel.castShadow = true;
+        this.boardGroup.add(wheel);
+        this.wheels.push(wheel);
+      });
+    });
+
+    // Start with board carried under arm while walking!
+    this.setSkatingMode(false);
   }
 
-  // Esegui frenata brusca (Powerslide)
-  brake(isKeyDown) {
-    this.isBraking = isKeyDown;
-    if (this.isBraking) {
-      this.speed = Math.max(this.minSpeed, this.speed - 0.015);
-      if (Math.random() < 0.25) sound.playPowerslide();
+  // Toggle between walking (board carried under arm) and skating (riding on ground)
+  setSkatingMode(skating) {
+    this.isSkating = skating;
+
+    if (this.isSkating) {
+      // Board drops to asphalt underneath Kurt's feet
+      if (this.boardGroup.parent) this.boardGroup.parent.remove(this.boardGroup);
+      this.group.add(this.boardGroup);
+      this.boardGroup.position.set(0, 0, 0);
+      this.boardGroup.rotation.set(0, 0, 0);
+      this.boardGroup.scale.set(1, 1, 1);
+
+      // Kurt crouches slightly in skate stance
+      this.pelvis.rotation.y = 0.55; // Angled skate stance
+      this.leftArm.rotation.set(0.4, 0, 0.5);
+      this.rightArm.rotation.set(-0.3, 0, -0.5);
+
+      sound.playBoardDrop();
+    } else {
+      // Board tucked under left arm while Kurt walks
+      if (this.boardGroup.parent) this.boardGroup.parent.remove(this.boardGroup);
+      this.leftArm.add(this.boardGroup);
+      this.boardGroup.position.set(0.06, -0.22, 0);
+      this.boardGroup.rotation.set(Math.PI / 2, 0, 0.2);
+      this.boardGroup.scale.set(0.85, 0.85, 0.85);
+
+      this.pelvis.rotation.y = 0; // Natural facing forward
     }
   }
 
-  // Esegui salto Ollie
-  ollie() {
+  // Manual or Random burst trigger
+  triggerSkateBurst() {
+    if (this.isSkating || this.isInsulting) return;
+    this.setSkatingMode(true);
+    this.skateBurstTimer = 7.0; // 7 seconds of high-speed street cruising
+  }
+
+  // Jump / Ollie over street obstacles
+  jump() {
     if (this.isJumping) return;
     this.isJumping = true;
-    this.jumpVelocity = 0.16;
-    this.jumpHeight = 0;
+    this.jumpVelocity = 0.15;
+    this.jumpY = 0;
     sound.playOlliePop();
   }
 
-  // Attiva animazione del gesto polemico quando incrocia un passante
-  triggerDialogueGesture() {
-    this.gestureTimer = 45; // Durata frame dell'animazione
+  // Hit obstacle: Kurt stumbles, grunts, loses speed
+  stumble() {
+    if (this.isStumbling) return;
+    this.isStumbling = true;
+    this.stumbleTimer = 0.7; // 0.7 seconds of stumble
+    this.currentSpeed = 0.5; // Stumbled speed drop
+    sound.playObstacleHit();
+
+    // If on skate, knock off board to walking
+    if (this.isSkating) {
+      this.setSkatingMode(false);
+    }
   }
 
-  // Sterzata (direzione: -1 sinistra, +1 destra, 0 neutro)
-  steer(dir) {
-    if (dir !== 0) {
-      this.laneX += dir * this.lateralSpeed;
-      // Limite carreggiata (tra i marciapiedi)
-      this.laneX = Math.max(-4.2, Math.min(4.2, this.laneX));
-      // Inclinazione tavola (lean sui gommini del truck)
-      this.turnAngle = THREE.MathUtils.lerp(this.turnAngle, dir * 0.22, 0.2);
-      this.leanAngle = THREE.MathUtils.lerp(this.leanAngle, -dir * 0.18, 0.25);
+  // Confront pedestrian: Stop, face them, unleash insult
+  startConfrontation(targetPedestrianPos) {
+    this.isInsulting = true;
+    this.insultTimer = 2.6; // Confrontation duration
+    this.currentSpeed = 0;
+
+    // Face the pedestrian
+    const dx = targetPedestrianPos.x - this.position.x;
+    const dz = targetPedestrianPos.z - this.position.z;
+    this.rotation = Math.atan2(dx, dz);
+
+    // Sarcastic pointing gesture
+    this.rightArm.rotation.set(-1.3, 0, 0.3);
+    this.hairGroup.rotation.z = 0.12; // Tired head tilt
+  }
+
+  update(delta, input) {
+    // -------------------------------------------------------------
+    // 1. TIMERS: Random skate bursts, stumbles, and insults
+    // -------------------------------------------------------------
+    if (this.insultTimer > 0) {
+      this.insultTimer -= delta;
+      if (this.insultTimer <= 0) {
+        this.isInsulting = false;
+        this.rightArm.rotation.set(0, 0, 0);
+        this.hairGroup.rotation.z = 0;
+      }
+      return; // Freeze locomotion during the verbal confrontation
+    }
+
+    if (this.isStumbling) {
+      this.stumbleTimer -= delta;
+      if (this.stumbleTimer <= 0) {
+        this.isStumbling = false;
+      }
+    }
+
+    // Skate Burst Duration Timer
+    if (this.isSkating) {
+      this.skateBurstTimer -= delta;
+      if (this.skateBurstTimer <= 0) {
+        this.setSkatingMode(false); // Return to walking
+      }
     } else {
-      this.turnAngle = THREE.MathUtils.lerp(this.turnAngle, 0, 0.15);
-      this.leanAngle = THREE.MathUtils.lerp(this.leanAngle, 0, 0.2);
-    }
-  }
-
-  update(delta) {
-    // 1. Avanzamento lungo l'asse Z negativo (strada dritta infinita)
-    this.position.z -= this.speed * 60 * delta;
-    this.position.x = this.laneX;
-
-    // Attrito naturale e ritorno alla velocità di crociera
-    if (!this.isBraking && !this.isPushing) {
-      if (this.speed > this.baseSpeed) {
-        this.speed = Math.max(this.baseSpeed, this.speed - 0.02 * delta);
-      } else if (this.speed < this.baseSpeed) {
-        this.speed = Math.min(this.baseSpeed, this.speed + 0.02 * delta);
+      // Random Skate Burst Countdown
+      this.nextRandomSkateTimer -= delta;
+      if (this.nextRandomSkateTimer <= 0) {
+        this.triggerSkateBurst();
+        this.nextRandomSkateTimer = 16 + Math.random() * 12;
       }
     }
 
-    // 2. Fisica Ollie (Salto con gravità)
+    // -------------------------------------------------------------
+    // 2. MOVEMENT & INPUT HANDLING (Free 360° Omnidirectional)
+    // -------------------------------------------------------------
+    const moveX = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+    const moveZ = (input.down ? 1 : 0) - (input.up ? 1 : 0);
+
+    const hasInput = (moveX !== 0 || moveZ !== 0);
+
+    if (hasInput && !this.isStumbling) {
+      this.isWalking = true;
+      const targetSpeed = this.isSkating ? this.skateSpeed : this.walkSpeed;
+      this.currentSpeed = THREE.MathUtils.lerp(this.currentSpeed, targetSpeed, 0.15);
+
+      // Target direction angle
+      const targetAngle = Math.atan2(moveX, moveZ);
+      // Smoothly rotate character toward movement vector
+      const diff = THREE.MathUtils.euclideanModulo(targetAngle - this.rotation + Math.PI, Math.PI * 2) - Math.PI;
+      this.rotation += diff * 0.18;
+
+      // Update position
+      const vx = Math.sin(this.rotation) * this.currentSpeed * delta;
+      const vz = Math.cos(this.rotation) * this.currentSpeed * delta;
+      this.position.x += vx;
+      this.position.z += vz;
+
+      // Restrict within Via Savona street boundaries (sidewalk walls)
+      this.position.x = Math.max(-5.2, Math.min(5.2, this.position.x));
+    } else {
+      this.isWalking = false;
+      this.currentSpeed = THREE.MathUtils.lerp(this.currentSpeed, 0, 0.18);
+    }
+
+    // -------------------------------------------------------------
+    // 3. JUMP & OLLIE PHYSICS
+    // -------------------------------------------------------------
     if (this.isJumping) {
-      this.jumpHeight += this.jumpVelocity;
-      this.jumpVelocity -= 0.012; // Gravità
+      this.jumpY += this.jumpVelocity;
+      this.jumpVelocity -= 0.011; // Gravity
 
-      // Animazione del pop: la tavola prima alza il nose, poi si livella, poi scende
-      if (this.jumpVelocity > 0.05) {
-        this.boardGroup.rotation.x = -0.35; // Pop
-      } else if (this.jumpVelocity < -0.05) {
-        this.boardGroup.rotation.x = 0.15;  // Prep landing
-      } else {
-        this.boardGroup.rotation.x = 0.0;   // Livellata in aria
-      }
-
-      if (this.jumpHeight <= 0) {
-        this.jumpHeight = 0;
+      if (this.jumpY <= 0) {
+        this.jumpY = 0;
         this.isJumping = false;
         this.jumpVelocity = 0;
-        this.boardGroup.rotation.x = 0;
-        sound.playLanding();
       }
     }
-    this.position.y = this.jumpHeight;
+    this.position.y = this.jumpY;
 
-    // 3. Animazione Push (gamba posteriore che spinge a terra)
-    if (this.isPushing) {
-      this.pushTimer += delta * 6.5;
-      const progress = this.pushTimer;
+    // -------------------------------------------------------------
+    // 4. ANIMATIONS: Walking vs. Skating
+    // -------------------------------------------------------------
+    if (this.isSkating) {
+      // Skating posture: deep carve lean and wheel spinning
+      const wheelSpin = this.currentSpeed * 10 * delta;
+      this.wheels.forEach(w => w.rotation.x += wheelSpin);
 
-      if (progress < 1.0) {
-        // Discesa del piede verso l'asfalto e spinta all'indietro
-        const kickZ = Math.sin(progress * Math.PI) * 0.35;
-        const kickY = -Math.sin(progress * Math.PI) * 0.18;
-        this.backLeg.position.z = 0.24 + kickZ;
-        this.backLeg.position.y = kickY;
-        this.backLeg.rotation.x = -Math.sin(progress * Math.PI) * 0.45;
-      } else {
-        // Ritorno sul tail della tavola
-        this.isPushing = false;
-        this.backLeg.position.set(0.06, 0.0, 0.24);
-        this.backLeg.rotation.x = 0;
+      // Slight rhythmic board carving
+      const carve = Math.sin(Date.now() * 0.006) * 0.08;
+      this.boardGroup.rotation.z = carve;
+
+      sound.updateRoll(this.currentSpeed, true);
+    } else if (this.isWalking && this.currentSpeed > 0.4) {
+      // Natural walking cycle (legs & right arm swing)
+      this.walkCycle += delta * (this.currentSpeed * 1.6);
+      const swing = Math.sin(this.walkCycle) * 0.48;
+
+      this.leftLeg.rotation.x = swing;
+      this.rightLeg.rotation.x = -swing;
+
+      // Right arm swings opposite to right leg
+      this.rightArm.rotation.x = swing * 0.65;
+
+      // Footstep sound cadence
+      this.footstepTimer += delta * this.currentSpeed;
+      if (this.footstepTimer > 2.2) {
+        this.footstepTimer = 0;
+        sound.playFootstep(Math.sin(this.walkCycle) > 0);
       }
-    }
 
-    // 4. Animazione Powerslide (Tavola di traverso e piegata)
-    if (this.isBraking) {
-      this.boardGroup.rotation.y = THREE.MathUtils.lerp(this.boardGroup.rotation.y, Math.PI / 2.6, 0.2);
-      this.pelvis.position.y = THREE.MathUtils.lerp(this.pelvis.position.y, 0.65, 0.2); // Accovacciato
+      // Natural slouched body bobbing
+      this.bodyGroup.position.y = Math.abs(Math.sin(this.walkCycle * 2)) * 0.04;
+      sound.updateRoll(0, false);
     } else {
-      this.boardGroup.rotation.y = THREE.MathUtils.lerp(this.boardGroup.rotation.y, this.turnAngle, 0.18);
-      this.pelvis.position.y = THREE.MathUtils.lerp(this.pelvis.position.y, 0.85, 0.15);
-    }
-
-    // Inclinazione tavola laterale (Lean sui gommini)
-    this.boardGroup.rotation.z = this.leanAngle;
-
-    // 5. Rotazione continua delle ruote proporzionale alla velocità
-    const wheelRotSpeed = this.speed * 8.5;
-    this.wheels.forEach(w => {
-      w.children[0].rotation.x += wheelRotSpeed;
-    });
-
-    // 6. Animazione gesticolazione polemica del braccio destro
-    if (this.gestureTimer > 0) {
-      this.gestureTimer--;
-      // Alza la mano destra a indicare il passante con sarcasmo
-      this.rightArm.rotation.x = -1.2;
-      this.rightArm.rotation.z = 0.4;
-    } else {
-      // Posizione naturale di bilanciamento delle braccia
-      const balanceSway = Math.sin(Date.now() * 0.005) * 0.08;
-      this.leftArm.rotation.z = 0.35 + balanceSway;
-      this.rightArm.rotation.z = -0.35 - balanceSway;
+      // Idle slouch
+      this.leftLeg.rotation.x = 0;
+      this.rightLeg.rotation.x = 0;
       this.rightArm.rotation.x = 0;
+      this.bodyGroup.position.y = 0;
+      sound.updateRoll(0, false);
     }
 
-    // 7. Leggero molleggio naturale del corpo (cruising bobbing)
-    if (!this.isJumping) {
-      const bobbing = Math.sin(Date.now() * 0.012 * (this.speed / this.baseSpeed)) * 0.018;
-      this.skaterGroup.position.y = bobbing;
-    }
-
-    // 8. Aggiorna posizione nello spazio 3D globale
+    // Apply global position and rotation
     this.group.position.copy(this.position);
-
-    // 9. Aggiorna audio di rotolamento delle ruote
-    sound.updateRoll(this.speed, !this.isJumping);
+    this.group.rotation.y = this.rotation;
   }
 }
