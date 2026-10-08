@@ -1,0 +1,19 @@
+{
+  "name": "SAVONA ANARCHY: Kurt Cobain in Via Savona",
+  "short_name": "Savona Anarchy",
+  "description": "Platformer surrealista d'autore ambientato in Via Savona a Milano. Kurt Cobain insulta i passanti facendoli esplodere mentre evita i colpi di pistola dei pedoni armati.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#090a0d",
+  "theme_color": "#e74c3c",
+  "categories": ["games", "action", "retro"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23090a0d'/><circle cx='256' cy='256' r='190' fill='%23e74c3c'/><text x='256' y='320' font-family='sans-serif' font-weight='900' font-size='220' text-anchor='middle' fill='%23ffffff'>💥</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

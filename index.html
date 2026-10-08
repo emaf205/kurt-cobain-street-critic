@@ -2,10 +2,13 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>SAVONA ANARCHY: Kurt Cobain in Via Savona</title>
   <meta name="description" content="Platformer cinematografico d'autore surrealista in Via Savona a Milano. Kurt Cobain insulta gli umani facendoli esplodere mentre evita i colpi di pistola dei pedoni armati.">
+  <meta name="theme-color" content="#e74c3c">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💥</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💥</text></svg>">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -23,30 +26,30 @@
         <h1 class="game-title">SAVONA <span>ANARCHY</span></h1>
         <p class="game-subtitle">
           Un platformer d'autore stile <em>Prince of Persia</em> & <em>Another World</em>.
-          Nei panni di Kurt Cobain attraversi Via Savona: insulta i passanti conformisti per farli <strong>esplodere</strong> in mille pezzi.
+          Nei panni di Kurt Cobain attraversi Via Savona: insulta i passanti conformisti per farli <strong>esplodere</strong> in mille pezzi con combo progressive.
           Ma attenzione: <strong>1 pedone su 5 è armato</strong> ed estrarrà la pistola per spararti. Accovacciati per schivare o sarà la fine!
         </p>
 
         <div class="controls-grid">
           <div class="control-item">
-            <span class="key-badge">← →</span>
+            <span class="key-badge">← → / A D</span>
             <div>
               <div class="control-desc">Cammina</div>
               <span class="control-sub">Movimento fluido sui marciapiedi</span>
             </div>
           </div>
           <div class="control-item">
-            <span class="key-badge">↑ / SPAZIO</span>
+            <span class="key-badge">↑ / SPAZIO / W</span>
             <div>
               <div class="control-desc">Salta / Ollie</div>
               <span class="control-sub">Scavalca ostacoli e rotaie del tram</span>
             </div>
           </div>
           <div class="control-item">
-            <span class="key-badge">↓</span>
+            <span class="key-badge">↓ / S</span>
             <div>
               <div class="control-desc">Accovacciati (Duck)</div>
-              <span class="control-sub">Schiva i proiettili dei pedoni armati!</span>
+              <span class="control-sub">Schiva i proiettili dei pedoni armati (+100 pt!)</span>
             </div>
           </div>
           <div class="control-item">
@@ -54,6 +57,13 @@
             <div>
               <div class="control-desc">Burst Skate</div>
               <span class="control-sub">Sfreccia a 35 km/h (anche casuale)</span>
+            </div>
+          </div>
+          <div class="control-item">
+            <span class="key-badge">M / V</span>
+            <div>
+              <div class="control-desc">Audio / Voce</div>
+              <span class="control-sub">M = Mute synth & SFX | V = Voce Italiana</span>
             </div>
           </div>
         </div>
@@ -77,6 +87,10 @@
           <div class="stat-item">
             <span class="stat-label">Punti Anarchia</span>
             <span class="stat-value highlight" id="score-val">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Record</span>
+            <span class="stat-value"><span id="best-score-val">0</span></span>
           </div>
           <div class="stat-item">
             <span class="stat-label">Velocità</span>
@@ -113,6 +127,7 @@
           <div>Umani Esplosi: <strong id="go-humans">0</strong></div>
           <div>Metri Percorsi in Via Savona: <strong id="go-distance">0</strong> m</div>
           <div>Punti Anarchia: <strong id="go-score">0</strong></div>
+          <div>Miglior Record: <strong id="go-best">0</strong></div>
         </div>
 
         <button id="btn-restart" class="btn-primary danger">RIAVVIA LA RIVOLTA [R]</button>
