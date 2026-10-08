@@ -1,0 +1,8 @@
+.DS_Store
+.AppleDouble
+__MACOSX
+*.log
+.env*
+*.pem
+*.key
+node_modules/

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>STREET CRITIC: Skater Polemico</title>
+  <meta name="description" content="Videogioco 3D realistico in cui uno skater irriverente attraversa la città commentando e dissando chiunque incontri.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛹</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- WebGL Three.js Canvas -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- Overlay UI Principale -->
+  <div id="ui-container">
+
+    <!-- Schermata di Avvio & Comandi -->
+    <div id="start-screen">
+      <div class="start-card clickable">
+        <div class="brand-badge">Simulatore Urbano Irriverente</div>
+        <h1 class="game-title">STREET <span>CRITIC</span></h1>
+        <p class="game-subtitle">
+          Sei uno skater sfacciato e polemico che viaggia dritto lungo il corso metropolitano.
+          Schiva gli ostacoli, aumenta la velocità e demolisci con la dialettica ogni cittadino conformista che incroci sul tuo cammino!
+        </p>
+
+        <div class="controls-grid">
+          <div class="control-item">
+            <span class="key-badge">← →</span>
+            <div>
+              <div class="control-desc">Sterza</div>
+              <span class="control-sub">Schiva i bordi e scegli la corsia</span>
+            </div>
+          </div>
+          <div class="control-item">
+            <span class="key-badge">↑ / W</span>
+            <div>
+              <div class="control-desc">Spinta (Push)</div>
+              <span class="control-sub">Gamba a terra per accelerare</span>
+            </div>
+          </div>
+          <div class="control-item">
+            <span class="key-badge">↓ / S</span>
+            <div>
+              <div class="control-desc">Powerslide</div>
+              <span class="control-sub">Frenata di traverso su asfalto</span>
+            </div>
+          </div>
+          <div class="control-item">
+            <span class="key-badge">SPAZIO</span>
+            <div>
+              <div class="control-desc">Ollie (Salto)</div>
+              <span class="control-sub">Salta tombini, cordoli e birilli</span>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-start-game" class="btn-primary">ENTRA IN STRADA (GIOCA)</button>
+      </div>
+    </div>
+
+    <!-- HUD di Gioco -->
+    <div id="hud" class="hidden">
+      <!-- Barra Superiore Statistiche & Controlli -->
+      <div class="hud-top-bar">
+        <div class="stats-card">
+          <div class="stat-item">
+            <span class="stat-label">Velocità</span>
+            <span class="stat-value"><span id="speed-val">15</span> <small style="font-size:11px;font-weight:400;color:#999">km/h</small></span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Distanza</span>
+            <span class="stat-value"><span id="distance-val">0</span> <small style="font-size:11px;font-weight:400;color:#999">m</small></span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Polemiche</span>
+            <span class="stat-value highlight" id="count-val">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Ego Score</span>
+            <span class="stat-value highlight" id="score-val">0</span>
+          </div>
+        </div>
+
+        <div class="hud-actions">
+          <button id="btn-toggle-camera" class="btn-hud">🎥 Terza Persona</button>
+          <button id="btn-toggle-sound" class="btn-hud">🔊 Effetti Audio</button>
+          <button id="btn-toggle-voice" class="btn-hud">🗣️ Voce Skater</button>
+          <button id="btn-restart" class="btn-hud">🔄 Riavvia</button>
+        </div>
+      </div>
+
+      <!-- Bacheca Live dei Dissing Effettuati -->
+      <div class="feed-panel">
+        <div class="feed-header">
+          <span>BACHECA DELLE POLEMICHE</span>
+          <span>LIVE</span>
+        </div>
+        <ul id="dialogue-log-list" class="feed-list"></ul>
+      </div>
+
+      <!-- Fumetto Dinamico dello Skater (Proiettato in 3D sullo schermo) -->
+      <div id="skater-bubble" class="speech-bubble">
+        <div class="bubble-tag">🛹 SKATER POLEMICO</div>
+        <div id="skater-bubble-text" class="bubble-quote">"..."</div>
+      </div>
+
+      <!-- Fumetto Dinamico del Pedone Incontrato -->
+      <div id="pedestrian-bubble" class="speech-bubble">
+        <div class="bubble-tag" id="ped-bubble-name">CITTADINO</div>
+        <div id="ped-bubble-text" class="bubble-quote">"..."</div>
+      </div>
+
+      <!-- Controlli Touch per Dispositivi Mobili -->
+      <div id="touch-controls">
+        <div class="touch-cluster">
+          <button id="btn-touch-left" class="btn-touch">◀</button>
+          <button id="btn-touch-right" class="btn-touch">▶</button>
+        </div>
+        <div class="touch-cluster">
+          <button id="btn-touch-push" class="btn-touch">▲</button>
+          <button id="btn-touch-ollie" class="btn-touch">JUMP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schermata di Pausa -->
+    <div id="pause-overlay" class="hidden clickable">
+      <h2 class="pause-title">PAUSA</h2>
+      <p style="color:var(--color-text-muted); margin-bottom:20px;">Premi 'P' sulla tastiera per riprendere la corsa.</p>
+    </div>
+
+  </div>
+
+  <!-- Dipendenze Three.js locale ad alta affidabilità -->
+  <script src="vendor/three.min.js"></script>
+
+  <!-- Logica Modulare del Gioco -->
+  <script type="module" src="js/game.js"></script>
+</body>
+</html>

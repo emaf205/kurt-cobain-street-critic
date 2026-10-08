@@ -1,0 +1,533 @@
+/* ==========================================================================
+   STREET CRITIC: Skater Polemico - Stili e Design System Urbano
+   Estetica street/realistica, contrasto netto, tipografia audace e HUD moderno.
+   ========================================================================== */
+
+:root {
+  --color-bg: #121316;
+  --color-surface: rgba(22, 24, 29, 0.88);
+  --color-surface-border: rgba(255, 255, 255, 0.12);
+  --color-accent: #ff5722;      /* Arancione cantiere/skate */
+  --color-accent-hover: #f4511e;
+  --color-yellow: #f1c40f;      /* Giallo segnaletica stradale */
+  --color-text-main: #f8f9fa;
+  --color-text-muted: #a0a5ad;
+  --color-dark: #0d0e11;
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "SF Mono", Monaco, "Cascadia Code", Consolas, monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--color-bg);
+  font-family: var(--font-family);
+  color: var(--color-text-main);
+}
+
+#game-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  display: block;
+}
+
+/* ==========================================================================
+   INTERFACCIA UTENTE & OVERLAY HUD
+   ========================================================================== */
+
+#ui-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.clickable {
+  pointer-events: auto;
+}
+
+/* Schermata di Avvio */
+#start-screen {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(18, 20, 24, 0.72) 0%, rgba(10, 11, 14, 0.94) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+  padding: 24px;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+#start-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.start-card {
+  background: var(--color-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-surface-border);
+  border-radius: 12px;
+  max-width: 580px;
+  width: 100%;
+  padding: 36px 32px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+.brand-badge {
+  display: inline-block;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.game-title {
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  text-transform: uppercase;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+
+.game-title span {
+  color: var(--color-accent);
+}
+
+.game-subtitle {
+  font-size: 15px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+/* Istruzioni Comandi */
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+.control-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.key-badge {
+  background: #2a2d34;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 3px solid rgba(0, 0, 0, 0.4);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  min-width: 32px;
+  text-align: center;
+}
+
+.control-desc {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.control-sub {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+/* ==========================================================================
+   HUD LIVE (Durante il gioco)
+   ========================================================================== */
+
+#hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+#hud.hidden {
+  display: none;
+}
+
+/* Barra Superiore */
+.hud-top-bar {
+  position: absolute;
+  top: 18px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.stats-card {
+  background: var(--color-surface);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--color-surface-border);
+  border-radius: 8px;
+  padding: 10px 18px;
+  display: flex;
+  gap: 24px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-text-muted);
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  color: #fff;
+}
+
+.stat-value.highlight {
+  color: var(--color-accent);
+}
+
+/* Pulsanti Rapidi Controllo */
+.hud-actions {
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.btn-hud {
+  background: var(--color-surface);
+  border: 1px solid var(--color-surface-border);
+  color: var(--color-text-main);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-hud:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Bacheca Laterale dei Dissing */
+.feed-panel {
+  position: absolute;
+  top: 90px;
+  right: 20px;
+  width: 280px;
+  background: var(--color-surface);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-surface-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.feed-header {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--color-yellow);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.feed-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.log-item {
+  font-size: 11px;
+  line-height: 1.3;
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid var(--color-accent);
+  border-radius: 2px;
+  animation: fadeIn 0.3s ease;
+}
+
+.log-target {
+  font-weight: 700;
+  color: #fff;
+  display: block;
+}
+
+.log-quote {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* ==========================================================================
+   FUMETTI DI DIALOGO 3D (Proiettati sulle teste)
+   ========================================================================== */
+
+.speech-bubble {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: 380px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
+  z-index: 25;
+  will-change: transform, opacity;
+}
+
+.speech-bubble.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Balloon Skater (Scuro, irriverente con accento arancione) */
+#skater-bubble {
+  background: #16181d;
+  border: 2px solid var(--color-accent);
+  color: #ffffff;
+}
+
+#skater-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 10px 8px 0;
+  border-style: solid;
+  border-color: var(--color-accent) transparent transparent;
+  display: block;
+  width: 0;
+}
+
+.bubble-tag {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 4px;
+}
+
+.bubble-quote {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+/* Balloon Pedone (Chiaro, reazione stizzita) */
+#pedestrian-bubble {
+  background: #ffffff;
+  border: 2px solid #c0392b;
+  color: #111111;
+}
+
+#pedestrian-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 10px 8px 0;
+  border-style: solid;
+  border-color: #c0392b transparent transparent;
+  display: block;
+  width: 0;
+}
+
+#pedestrian-bubble .bubble-tag {
+  color: #c0392b;
+}
+
+#pedestrian-bubble .bubble-quote {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1c2833;
+}
+
+/* Floating Score Tag */
+.floating-score {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-yellow);
+  color: #111;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 1px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: floatUp 1.2s ease-out forwards;
+  pointer-events: none;
+  z-index: 30;
+}
+
+@keyframes floatUp {
+  0% { opacity: 0; transform: translate(-50%, -20%) scale(0.8); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  80% { opacity: 1; transform: translate(-50%, -80%) scale(1.0); }
+  100% { opacity: 0; transform: translate(-50%, -120%) scale(0.9); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ==========================================================================
+   CONTROLLI TOUCH (Per dispositivi mobili e tablet)
+   ========================================================================== */
+
+#touch-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 20px;
+  right: 20px;
+  display: none;
+  justify-content: space-between;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+@media (max-width: 900px), (pointer: coarse) {
+  #touch-controls {
+    display: flex;
+  }
+  .feed-panel {
+    display: none; /* Nascondi bacheca su schermi piccoli */
+  }
+  .speech-bubble {
+    max-width: 290px;
+    padding: 10px 12px;
+  }
+}
+
+.touch-cluster {
+  display: flex;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.btn-touch {
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
+  background: var(--color-surface);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+
+.btn-touch:active {
+  background: var(--color-accent);
+  border-color: #fff;
+}
+
+/* Overlay Pausa */
+#pause-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 11, 14, 0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 40;
+}
+
+#pause-overlay.hidden {
+  display: none;
+}
+
+.pause-title {
+  font-size: 32px;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
