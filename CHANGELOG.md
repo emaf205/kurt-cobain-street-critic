@@ -1,37 +1,36 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+Tutti i cambiamenti rilevanti a questo progetto sono documentati in questo file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
-and adheres to [Semantic Versioning](https://semver.org/).
+Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.0.0/)
+e rispetta la convenzione [Semantic Versioning](https://semver.org/).
+
+## [3.0.0] - 2026-10-08 - "Savona Anarchy: Surrealist Platformer Edition"
+
+### Aggiunto
+- **Riprogettazione Platformer Cinematografico**: Ispirato ai grandi classici rotoscopici d'autore (*Prince of Persia*, *Another World*, *Flashback*), con rendering fluido a 60 FPS, palette minimalista e iconica.
+- **Ambientazione Iconica: Via Savona a Milano**:
+  - Loft industriali in mattoni rossi, showroom di design (`Superstudio Expo`, `Spazio Anarchia`), rotaie e storico **Tram 19 Carelli** che transita sullo sfondo.
+  - Targhe toponomastiche milanesi *"VIA SAVONA"*.
+- **Meccanica Insulto & Esplosione Umana**:
+  - Quando Kurt si avvicina a un passante, pronuncia una tagliente battuta satirica ed esistenzialista in italiano.
+  - **L'umano esplode all'istante** in un'esplosione surrealista di particelle geometriche, coriandoli e fumo, mentre Kurt prosegue impassibile attraverso la nube.
+- **Meccanica Nemici Armati (1 su 5 Spara)**:
+  - Il 20% dei pedoni è segretamente armato: quando Kurt si avvicina, estraggono una pistola con indicatore di allerta `[!]` e fanno fuoco con un colpo letale.
+  - Il giocatore deve accovacciarsi tempestivamente (`↓` / Duck) per far sibilare il proiettile sopra la testa, altrimenti Kurt muore sul colpo (*Game Over* drammatico).
+- **Variabili Casuali d'Ambiente**:
+  - Ciclo casuale Giorno / Notte (Crepuscolo industriale vs Notte milanese blu petrolio).
+  - Condizioni meteo casuali (Pioggia milanese sui vetri vs foschia secca).
+  - Burst skate casuale (Kurt lancia la tavola e scatta a 35 km/h).
+- **Intro Cinematografica Testuale**: Sequenza d'atmosfera ambientata alle ore 03:42 a Milano.
+- **5 Screenshot Reali In-Game**: Catturati direttamente dal motore di gioco e inclusi nel repository (`screenshots/`).
+- **Sound Design Retro-Grunge**:
+  - Boombass per l'esplosione degli umani con detriti.
+  - Sparo realistico con eco da vicolo urbano.
+  - Riff distorti in Drop-D, rumore dei passi e voce italiana recitata via Web Speech API.
 
 ## [2.0.0] - 2026-10-08
-
-### Added
-- **Protagonist Shift to Kurt Cobain**: Full 3D grunge model featuring long shaggy blonde hair, oversized olive green knit cardigan (MTV Unplugged style), faded vintage tee, ripped denim jeans with knee holes, and distressed canvas sneakers.
-- **Setting: Via Savona & Zona Tortona (Milan)**: Authentic Milanese fashion & design district environment with post-industrial brick loft architecture, showroom galleries (`Spazio Savona 37`, `Superstudio Design`), Milan street signs, and cobblestone/asphalt pavement.
-- **Free 360° Omnidirectional Locomotion**: Player now has full freedom to walk, run, and explore Via Savona in any direction using WASD or Arrow keys.
-- **Dynamic Board System**: Kurt carries his skateboard under his left arm while walking; triggers sudden high-speed skate bursts randomly or manually on command (Shift / Space), dropping the deck with a resonant snap and cruising at 35 km/h.
-- **Interactive Obstacle System**: Added real obstacles throughout Via Savona that the player must dodge or jump/ollie over:
-  - Piles of design week delivery cardboard boxes (`Fragile // Milano Design`)
-  - Dumped Lime/Dott electric scooters on the sidewalk
-  - Outdoor aperitivo cocktail bistro tables and wire chairs
-  - Roadworks hazard barriers
-  - Collision detection: If Kurt collides without jumping, he stumbles, grunts, loses momentum, and a stumble alert is displayed.
-- **Targeted Insult Confrontation**: Kurt stops directly in front of approaching pedestrians to unleash savage, cynical, anti-consumerist grunge insults.
-- **Realistic Pedestrian AI & Physical Reactions**:
-  - Milanese archetypes: Fashion Week Influencer, Fuorisalone Architect, Aperitivo Bro, Casting Model, Showroom Bouncer, Zona Tortona Aristocrat (Sciura), Specialty Coffee Barista, and App Courier.
-  - Pedestrians visibly recoil/flinch backward, throw up their hands in outrage, gasp in shock, retort with authentic offended comebacks, and hurry away.
-- **Complete English Localization**: All dialogues, subtitles, HUD counters, instructions, and audio Web Speech synthesis are in English with a deadpan, raspy Kurt Cobain tone.
-- **Studio-Grade Grunge Sound Design**:
-  - Vintage tube amplifier overdrive (Waveshaper non-linear saturation)
-  - Drop-D power chord electric guitar stingers on every successful confrontation
-  - High-frequency amplifier feedback squeal
-  - Footstep audio on stone pavement and skateboard click-thwack drops
-- **FTP Deployment Ready Package**: Clean zip archive (`via-savona-kurt-cobain-ftp-ready.zip`) ready for direct upload to any standard web hosting server.
-- **Private GitHub Repository**: Configured and synchronized with `https://github.com/emaf205/kurt-cobain-street-critic`.
+- Versione 3D free-roam di Via Savona con Kurt Cobain e ostacoli urbani.
 
 ## [1.0.0] - 2026-10-08
-
-### Added
-- Initial 3D procedural prototype with Three.js WebGL runner mechanics, Web Audio rolling sounds, and Italian banter.
+- Prototipo iniziale runner straight-line.

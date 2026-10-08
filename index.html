@@ -1,143 +1,126 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>KURT IN MILAN: Via Savona Critic</title>
-  <meta name="description" content="3D realistic free-roam indie game where Kurt Cobain wanders Via Savona in Milan, dodging obstacles and ruthlessly roasting fashion victims and architects.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎸</text></svg>">
+  <title>SAVONA ANARCHY: Kurt Cobain in Via Savona</title>
+  <meta name="description" content="Platformer cinematografico d'autore surrealista in Via Savona a Milano. Kurt Cobain insulta gli umani facendoli esplodere mentre evita i colpi di pistola dei pedoni armati.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💥</text></svg>">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <!-- WebGL Three.js Canvas -->
+  <!-- Retro Canvas 2D -->
   <canvas id="game-canvas"></canvas>
 
-  <!-- UI Overlay -->
+  <!-- Overlay UI Principale -->
   <div id="ui-container">
 
-    <!-- Start / Tutorial Screen -->
+    <!-- Schermata Iniziale -->
     <div id="start-screen">
       <div class="start-card clickable">
-        <div class="brand-badge">MILAN DESIGN DISTRICT // VIA SAVONA</div>
-        <h1 class="game-title">KURT IN MILAN: <span>SAVONA CRITIC</span></h1>
+        <div class="brand-badge">MILANO // VIA SAVONA // ANARCHIA SURREALISTA</div>
+        <h1 class="game-title">SAVONA <span>ANARCHY</span></h1>
         <p class="game-subtitle">
-          You are a scruffy, disillusioned Kurt Cobain stranded in Via Savona — Milan's most pretentious fashion and design district.
-          Roam the sidewalks, dodge showroom delivery boxes and dumped e-scooters, drop your board for high-speed skate bursts,
-          and confront corporate yuppies, architects, and influencers with brutal existential insults.
+          Un platformer d'autore stile <em>Prince of Persia</em> & <em>Another World</em>.
+          Nei panni di Kurt Cobain attraversi Via Savona: insulta i passanti conformisti per farli <strong>esplodere</strong> in mille pezzi.
+          Ma attenzione: <strong>1 pedone su 5 è armato</strong> ed estrarrà la pistola per spararti. Accovacciati per schivare o sarà la fine!
         </p>
 
         <div class="controls-grid">
           <div class="control-item">
-            <span class="key-badge">W A S D</span>
+            <span class="key-badge">← →</span>
             <div>
-              <div class="control-desc">Free 360° Movement</div>
-              <span class="control-sub">Walk & explore sidewalks of Via Savona</span>
+              <div class="control-desc">Cammina</div>
+              <span class="control-sub">Movimento fluido sui marciapiedi</span>
             </div>
           </div>
           <div class="control-item">
-            <span class="key-badge">SPACE</span>
+            <span class="key-badge">↑ / SPAZIO</span>
             <div>
-              <div class="control-desc">Jump / Ollie</div>
-              <span class="control-sub">Leap over boxes, scooters & barriers</span>
+              <div class="control-desc">Salta / Ollie</div>
+              <span class="control-sub">Scavalca ostacoli e rotaie del tram</span>
+            </div>
+          </div>
+          <div class="control-item">
+            <span class="key-badge">↓</span>
+            <div>
+              <div class="control-desc">Accovacciati (Duck)</div>
+              <span class="control-sub">Schiva i proiettili dei pedoni armati!</span>
             </div>
           </div>
           <div class="control-item">
             <span class="key-badge">SHIFT</span>
             <div>
-              <div class="control-desc">Skate Burst</div>
-              <span class="control-sub">Drop board & cruise (also triggers randomly)</span>
-            </div>
-          </div>
-          <div class="control-item">
-            <span class="key-badge">NEARBY</span>
-            <div>
-              <div class="control-desc">Confront & Roast</div>
-              <span class="control-sub">Walk up to pedestrians to trigger insults</span>
+              <div class="control-desc">Burst Skate</div>
+              <span class="control-sub">Sfreccia a 35 km/h (anche casuale)</span>
             </div>
           </div>
         </div>
 
-        <button id="btn-start-game" class="btn-primary">HIT VIA SAVONA (PLAY)</button>
+        <button id="btn-start-game" class="btn-primary">INIZIA LA RIVOLTA (GIOCA)</button>
       </div>
     </div>
 
-    <!-- Gameplay HUD -->
+    <!-- HUD di Gioco -->
     <div id="hud" class="hidden">
-      <!-- Top Stats Bar -->
       <div class="hud-top-bar">
         <div class="stats-card">
           <div class="stat-item">
-            <span class="stat-label">Speed</span>
-            <span class="stat-value"><span id="speed-val">0</span> <small style="font-size:11px;font-weight:400;color:#999">km/h</small></span>
-          </div>
-          <div class="stat-item">
             <span class="stat-label">Via Savona</span>
-            <span class="stat-value"><span id="distance-val">0</span> <small style="font-size:11px;font-weight:400;color:#999">m</small></span>
+            <span class="stat-value"><span id="distance-val">0</span> <small style="font-size:11px;color:#888">m</small></span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Roasted</span>
+            <span class="stat-label">Umani Esplosi</span>
             <span class="stat-value highlight" id="count-val">0</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Cynicism Score</span>
+            <span class="stat-label">Punti Anarchia</span>
             <span class="stat-value highlight" id="score-val">0</span>
           </div>
-        </div>
-
-        <div class="hud-actions">
-          <button id="btn-toggle-camera" class="btn-hud">🎥 3rd Person</button>
-          <button id="btn-toggle-sound" class="btn-hud">🔊 Grunge Audio</button>
-          <button id="btn-toggle-voice" class="btn-hud">🗣️ Kurt Voice</button>
-          <button id="btn-restart" class="btn-hud">🔄 Restart</button>
+          <div class="stat-item">
+            <span class="stat-label">Velocità</span>
+            <span class="stat-value"><span id="speed-val">0</span> <small style="font-size:11px;color:#888">km/h</small></span>
+          </div>
         </div>
       </div>
 
-      <!-- Live Milanese Roast Log -->
-      <div class="feed-panel">
-        <div class="feed-header">
-          <span>MILANESE ROAST LOG</span>
-          <span>LIVE</span>
-        </div>
-        <ul id="dialogue-log-list" class="feed-list"></ul>
-      </div>
-
-      <!-- Kurt's Dynamic 3D Speech Bubble -->
-      <div id="skater-bubble" class="speech-bubble">
-        <div class="bubble-tag">🎸 KURT COBAIN // VIA SAVONA</div>
-        <div id="skater-bubble-text" class="bubble-quote">"..."</div>
-      </div>
-
-      <!-- Pedestrian's Dynamic 3D Reaction Bubble -->
-      <div id="pedestrian-bubble" class="speech-bubble">
-        <div class="bubble-tag" id="ped-bubble-name">MILANESE RESIDENT</div>
-        <div id="ped-bubble-text" class="bubble-quote">"..."</div>
-      </div>
-
-      <!-- Mobile Touch Controls -->
+      <!-- Controlli Touch Mobile -->
       <div id="touch-controls">
         <div class="touch-cluster">
           <button id="btn-touch-left" class="btn-touch">◀</button>
           <button id="btn-touch-right" class="btn-touch">▶</button>
-          <button id="btn-touch-up" class="btn-touch">▲</button>
-          <button id="btn-touch-down" class="btn-touch">▼</button>
+          <button id="btn-touch-duck" class="btn-touch">▼ GIÙ</button>
         </div>
         <div class="touch-cluster">
-          <button id="btn-touch-jump" class="btn-touch">JUMP</button>
+          <button id="btn-touch-jump" class="btn-touch">SALTA</button>
           <button id="btn-touch-skate" class="btn-touch">SKATE</button>
         </div>
       </div>
     </div>
 
-    <!-- Pause Overlay -->
-    <div id="pause-overlay" class="hidden clickable">
-      <h2 class="pause-title">PAUSED</h2>
-      <p style="color:var(--color-text-muted); margin-bottom:20px;">Press 'P' on keyboard to resume your stroll through Via Savona.</p>
+    <!-- Schermata Game Over -->
+    <div id="game-over-screen" class="hidden">
+      <div class="game-over-card clickable">
+        <div class="brand-badge danger">LETALE</div>
+        <h2 class="go-title">UCCISO DAL CONFORMISMO</h2>
+        <p class="go-desc">
+          Uno dei pedoni ha estratto la pistola e ti ha sparato a bruciapelo.<br>
+          Non ti sei accovacciato in tempo per schivare il proiettile.
+        </p>
+
+        <div class="go-stats">
+          <div>Umani Esplosi: <strong id="go-humans">0</strong></div>
+          <div>Metri Percorsi in Via Savona: <strong id="go-distance">0</strong> m</div>
+          <div>Punti Anarchia: <strong id="go-score">0</strong></div>
+        </div>
+
+        <button id="btn-restart" class="btn-primary danger">RIAVVIA LA RIVOLTA [R]</button>
+      </div>
     </div>
 
   </div>
 
-  <script src="vendor/three.min.js"></script>
   <script type="module" src="js/game.js"></script>
 </body>
 </html>
