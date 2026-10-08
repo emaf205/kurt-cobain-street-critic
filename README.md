@@ -4,10 +4,13 @@ Un videogioco platformer cinematografico d'autore, surreale e dissacrante, ispir
 
 Ambientato in **Via Savona a Milano** (il cuore del distretto del design e della moda di Zona Tortona), vede protagonista un **Kurt Cobain** sgualcito, nichilista e irriverente che cammina lungo i marciapiedi milanesi tra rotaie del tram e loft industriali: **insulta gli umani conformisti facendoli esplodere**, mentre deve schivare i proiettili dei pedoni armati.
 
-![Version](https://img.shields.io/badge/version-3.0.0-orange)
+![Version](https://img.shields.io/badge/version-3.2.0-orange)
 ![Setting](https://img.shields.io/badge/setting-Milano%20%2F%20Via%20Savona-red)
 ![Style](https://img.shields.io/badge/style-Prince%20of%20Persia%20%2F%20Surrealist-blue)
-![Audio](https://img.shields.io/badge/audio-Explosions%20%26%20Gunshots-yellow)
+![PWA](https://img.shields.io/badge/PWA-Offline%20First-green)
+
+👉 **Demo Giocabile Live (Mobile & Desktop)**: [https://emaf205.com/ideas/savona-anarchy/](https://emaf205.com/ideas/savona-anarchy/)
+
 
 ---
 
